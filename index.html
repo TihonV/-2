@@ -6,7 +6,6 @@
     <title>SuperBuilder AI - Мощный HTML конструктор</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script src="https://unpkg.com/caman@4.1.2/dist/caman.full.js"></script>
     <style>
         :root {
             --primary: #6366f1;
@@ -470,19 +469,8 @@
             cursor: pointer;
         }
 
-        /* Анимации */
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
-            70% { box-shadow: 0 0 0 15px rgba(99, 102, 241, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
-        }
-
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-
-        /* 3D модель */
-        .model-container {
+        /* CSS/JS редактор */
+        .code-editor {
             position: fixed;
             top: 0;
             left: 0;
@@ -495,14 +483,57 @@
             justify-content: center;
         }
 
-        .model-container.active {
+        .code-editor.active {
             display: flex;
         }
 
-        #modelCanvas {
-            width: 800px;
-            height: 600px;
+        .code-content {
+            width: 90%;
+            max-width: 1000px;
+            height: 80%;
+            background: #1e1e1e;
             border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .code-tabs {
+            display: flex;
+            background: #2d2d30;
+            padding: 0 10px;
+        }
+
+        .code-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .code-tab.active {
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .code-area {
+            width: 100%;
+            height: calc(100% - 40px);
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            padding: 20px;
+            resize: none;
+        }
+
+        /* Анимации */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(99, 102, 241, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
         }
 
         /* Сообщения */
@@ -571,7 +602,7 @@
             <button class="tool-btn active" title="Компоненты" data-panel="components">📦</button>
             <button class="tool-btn" title="Свойства" data-panel="properties">⚙️</button>
             <button class="tool-btn" title="Шаблоны" data-panel="templates">🎨</button>
-            <button class="tool-btn" title="3D Модели" data-panel="models">🧩</button>
+            <button class="tool-btn" title="CSS/JS" onclick="openCodeEditor()">💻</button>
             <button class="tool-btn" title="Экспорт" onclick="showExportModal()">📤</button>
             <button class="tool-btn" title="Помощь" onclick="showHelpModal()">❓</button>
         </div>
@@ -598,9 +629,9 @@
                             <div class="component-icon">🔘</div>
                             <div class="component-name">Кнопка</div>
                         </div>
-                        <div class="component-item" draggable="true" data-type="input">
-                            <div class="component-icon">✍️</div>
-                            <div class="component-name">Поле ввода</div>
+                        <div class="component-item" draggable="true" data-type="video">
+                            <div class="component-icon">🎥</div>
+                            <div class="component-name">Видео</div>
                         </div>
                     </div>
                 </div>
@@ -616,35 +647,13 @@
                             <div class="component-icon">🌐</div>
                             <div class="component-name">Сетка</div>
                         </div>
-                        <div class="component-item" draggable="true" data-type="video">
-                            <div class="component-icon">🎥</div>
-                            <div class="component-name">Видео</div>
-                        </div>
                         <div class="component-item" draggable="true" data-type="form">
                             <div class="component-icon">📋</div>
                             <div class="component-name">Форма</div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="component-category">
-                    <div class="category-title">Интерактив</div>
-                    <div class="component-grid">
-                        <div class="component-item" draggable="true" data-type="3d-model">
-                            <div class="component-icon">💎</div>
-                            <div class="component-name">3D Модель</div>
-                        </div>
-                        <div class="component-item" draggable="true" data-type="animation">
-                            <div class="component-icon">✨</div>
-                            <div class="component-name">Анимация</div>
-                        </div>
                         <div class="component-item" draggable="true" data-type="map">
                             <div class="component-icon">🗺️</div>
                             <div class="component-name">Карта</div>
-                        </div>
-                        <div class="component-item" draggable="true" data-type="chart">
-                            <div class="component-icon">📊</div>
-                            <div class="component-name">График</div>
                         </div>
                     </div>
                 </div>
@@ -701,8 +710,8 @@
                     <input type="range" class="form-control" id="borderRadius" min="0" max="50" onchange="updateElementStyle()">
                 </div>
                 <div class="form-group">
-                    <label>Тень</label>
-                    <input type="checkbox" id="boxShadow" onchange="toggleBoxShadow()">
+                    <label>Фон (URL)</label>
+                    <input type="text" class="form-control" id="bgImage" onchange="updateBackgroundImage()">
                 </div>
             </div>
             <div class="property-group">
@@ -712,8 +721,29 @@
                     <textarea class="form-control" id="textContent" rows="3" onchange="updateElementContent()"></textarea>
                 </div>
                 <div class="form-group">
-                    <label>Изображение (URL)</label>
+                    <label>Изображение (URL или файл)</label>
                     <input type="text" class="form-control" id="imageSrc" onchange="updateElementContent()">
+                    <input type="file" class="form-control" accept="image/*" onchange="handleImageUpload(this)">
+                </div>
+                <div class="form-group">
+                    <label>Видео (URL или файл)</label>
+                    <input type="text" class="form-control" id="videoSrc" onchange="updateVideoContent()">
+                    <input type="file" class="form-control" accept="video/*" onchange="handleVideoUpload(this)">
+                </div>
+            </div>
+            <div class="property-group">
+                <h4>Кнопка (если элемент кнопка)</h4>
+                <div class="form-group">
+                    <label>Ссылка</label>
+                    <input type="text" class="form-control" id="buttonLink" onchange="updateButtonLink()">
+                </div>
+                <div class="form-group">
+                    <label>Открыть в:</label>
+                    <select class="form-control" id="buttonTarget" onchange="updateButtonLink()">
+                        <option value="_self">Текущей вкладке</option>
+                        <option value="_blank">Новой вкладке</option>
+                        <option value="newPage">Новой странице</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -744,6 +774,20 @@
         </div>
     </div>
 
+    <!-- CSS/JS редактор -->
+    <div class="code-editor" id="codeEditor">
+        <div class="code-content">
+            <div class="code-tabs">
+                <div class="code-tab active" data-tab="css">CSS</div>
+                <div class="code-tab" data-tab="js">JavaScript</div>
+                <div class="code-tab" data-tab="html">HTML</div>
+            </div>
+            <textarea class="code-area" id="cssCode" placeholder="Введите CSS код..."></textarea>
+            <textarea class="code-area" id="jsCode" placeholder="Введите JavaScript код..." style="display: none;"></textarea>
+            <textarea class="code-area" id="htmlCode" placeholder="Введите HTML код..." style="display: none;"></textarea>
+        </div>
+    </div>
+
     <!-- Модальное окно экспорта -->
     <div class="modal" id="exportModal">
         <div class="modal-content">
@@ -764,14 +808,6 @@
                         <option value="github">GitHub Repository</option>
                         <option value="pwa">PWA (с оффлайн режимом)</option>
                     </select>
-                </div>
-                <div class="form-group">
-                    <label>Дополнительно</label>
-                    <div>
-                        <label><input type="checkbox" id="includeAnimations"> Анимации</label><br>
-                        <label><input type="checkbox" id="include3D"> 3D модели</label><br>
-                        <label><input type="checkbox" id="includeAI"> AI-оптимизация</label>
-                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -796,27 +832,21 @@
                     <li><strong>Ctrl+Y</strong> - Повторить действие</li>
                     <li><strong>Del</strong> - Удалить элемент</li>
                     <li><strong>Ctrl+D</strong> - Дублировать элемент</li>
-                    <li><strong>Ctrl+G</strong> - Сгруппировать элементы</li>
                 </ul>
                 <h4>Возможности:</h4>
                 <ul style="margin: 10px 0; padding-left: 20px;">
                     <li>Drag & Drop интерфейс</li>
                     <li>AI-генерация контента</li>
-                    <li>3D модели и анимации</li>
+                    <li>Видео и изображения</li>
+                    <li>Мультистраничность</li>
+                    <li>CSS/JS редактор</li>
                     <li>Экспорт в PWA/GitHub</li>
-                    <li>Сохранение в localStorage</li>
-                    <li>Множество шаблонов</li>
                 </ul>
             </div>
             <div class="modal-footer">
                 <button class="action-btn btn-primary" onclick="hideModal('helpModal')">Понятно</button>
             </div>
         </div>
-    </div>
-
-    <!-- 3D модель -->
-    <div class="model-container" id="modelContainer">
-        <canvas id="modelCanvas"></canvas>
     </div>
 
     <!-- Сообщение -->
@@ -828,13 +858,18 @@
         let history = [];
         let historyIndex = -1;
         let aiMessages = [];
-        let currentModel = null;
+        let currentTab = 'css';
+        let pageStructure = {
+            pages: ['main'],
+            currentPage: 'main',
+            elements: {}
+        };
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
             loadProject();
-            init3DRenderer();
+            setupCodeEditor();
         });
 
         function setupEventListeners() {
@@ -883,16 +918,18 @@
             let content = '';
             switch(type) {
                 case 'text':
-                    content = '<div style="padding: 15px; color: var(--dark);">Текстовый блок</div>';
+                    content = '<div style="padding: 15px; color: white;">Текстовый блок</div>';
                     break;
                 case 'image':
                     content = '<img src="https://via.placeholder.com/200x100/6366f1/ffffff?text=Изображение" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">';
                     break;
                 case 'button':
                     content = '<button style="width: 100%; height: 100%; border: none; background: var(--primary); color: white; cursor: pointer; border-radius: 8px; font-weight: 500;">Кнопка</button>';
+                    element.setAttribute('data-type', 'button');
                     break;
-                case 'input':
-                    content = '<input type="text" placeholder="Введите текст..." style="width: 100%; height: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 8px;">';
+                case 'video':
+                    content = '<video controls style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;"><source src="" type="video/mp4"></video>';
+                    element.setAttribute('data-type', 'video');
                     break;
                 case 'card':
                     content = `
@@ -910,9 +947,6 @@
                         </div>
                     `;
                     break;
-                case 'video':
-                    content = '<div style="background: #333; display: flex; align-items: center; justify-content: center; height: 100%; border-radius: 8px; color: white;">🎥 Видео</div>';
-                    break;
                 case 'form':
                     content = `
                         <div style="padding: 15px; background: var(--light); color: var(--dark); border-radius: 8px; height: 100%;">
@@ -923,25 +957,8 @@
                         </div>
                     `;
                     break;
-                case '3d-model':
-                    content = `
-                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: linear-gradient(45deg, #6366f1, #8b5cf6); color: white; border-radius: 8px; cursor: pointer;" onclick="load3DModel(this)">
-                            <div>💎 3D Модель</div>
-                        </div>
-                    `;
-                    break;
-                case 'animation':
-                    content = `
-                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: var(--accent); color: white; border-radius: 8px; animation: pulse 2s infinite;" id="animatedElement">
-                            ✨ Анимация
-                        </div>
-                    `;
-                    break;
                 case 'map':
                     content = '<div style="background: #e0e0e0; padding: 20px; text-align: center; height: 100%; border-radius: 8px; color: var(--dark);">🗺️ Карта</div>';
-                    break;
-                case 'chart':
-                    content = '<div style="background: #f0fdf4; padding: 15px; text-align: center; height: 100%; border-radius: 8px; color: var(--dark);">📊 График</div>';
                     break;
             }
 
@@ -977,6 +994,15 @@
             document.getElementById('textColor').value = rgbToHex(styles.color);
             document.getElementById('borderRadius').value = parseInt(styles.borderRadius) || 0;
             document.getElementById('textContent').value = selectedElement.textContent || '';
+            
+            // Проверка типа элемента для специфических свойств
+            if (selectedElement.getAttribute('data-type') === 'button') {
+                document.querySelector('.property-group:last-child').style.display = 'block';
+                document.getElementById('buttonLink').value = selectedElement.getAttribute('data-link') || '';
+                document.getElementById('buttonTarget').value = selectedElement.getAttribute('data-target') || '_self';
+            } else {
+                document.querySelector('.property-group:last-child').style.display = 'none';
+            }
         }
 
         function updateElementPosition() {
@@ -1011,14 +1037,16 @@
             selectedElement.style.borderRadius = borderRadius + 'px';
         }
 
-        function toggleBoxShadow() {
+        function updateBackgroundImage() {
             if (!selectedElement) return;
             
-            const checkbox = document.getElementById('boxShadow');
-            if (checkbox.checked) {
-                selectedElement.style.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.1)';
+            const bgImage = document.getElementById('bgImage').value;
+            if (bgImage) {
+                selectedElement.style.backgroundImage = `url(${bgImage})`;
+                selectedElement.style.backgroundSize = 'cover';
+                selectedElement.style.backgroundPosition = 'center';
             } else {
-                selectedElement.style.boxShadow = 'none';
+                selectedElement.style.backgroundImage = 'none';
             }
         }
 
@@ -1028,14 +1056,76 @@
             const textContent = document.getElementById('textContent').value;
             const imageSrc = document.getElementById('imageSrc').value;
             
-            if (imageSrc) {
-                const img = selectedElement.querySelector('img');
-                if (img) {
-                    img.src = imageSrc;
-                }
-            } else {
-                selectedElement.innerHTML = `<div style="padding: 15px;">${textContent}</div>`;
+            if (imageSrc && selectedElement.querySelector('img')) {
+                selectedElement.querySelector('img').src = imageSrc;
+            } else if (textContent) {
+                selectedElement.innerHTML = `<div style="padding: 15px; color: white;">${textContent}</div>`;
             }
+        }
+
+        function handleImageUpload(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('imageSrc').value = e.target.result;
+                    updateElementContent();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleVideoUpload(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('videoSrc').value = e.target.result;
+                    updateVideoContent();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function updateVideoContent() {
+            if (!selectedElement || selectedElement.getAttribute('data-type') !== 'video') return;
+            
+            const videoSrc = document.getElementById('videoSrc').value;
+            if (videoSrc) {
+                selectedElement.querySelector('video source').src = videoSrc;
+                selectedElement.querySelector('video').load();
+            }
+        }
+
+        function updateButtonLink() {
+            if (!selectedElement || selectedElement.getAttribute('data-type') !== 'button') return;
+            
+            const link = document.getElementById('buttonLink').value;
+            const target = document.getElementById('buttonTarget').value;
+            
+            selectedElement.setAttribute('data-link', link);
+            selectedElement.setAttribute('data-target', target);
+            
+            const button = selectedElement.querySelector('button');
+            if (button) {
+                button.onclick = function(e) {
+                    e.preventDefault();
+                    if (target === 'newPage') {
+                        createNewPage(link);
+                    } else {
+                        window.open(link, target);
+                    }
+                };
+            }
+        }
+
+        function createNewPage(pageName) {
+            if (!pageStructure.pages.includes(pageName)) {
+                pageStructure.pages.push(pageName);
+                pageStructure.elements[pageName] = [];
+            }
+            pageStructure.currentPage = pageName;
+            showMessage(`Создана новая страница: ${pageName}`, 'success');
         }
 
         function handleClickOutside(e) {
@@ -1054,6 +1144,7 @@
             document.getElementById('width').value = '';
             document.getElementById('height').value = '';
             document.getElementById('textContent').value = '';
+            document.querySelector('.property-group:last-child').style.display = 'none';
         }
 
         function handleKeyPress(e) {
@@ -1118,7 +1209,8 @@
             const projectData = {
                 canvas: document.getElementById('canvas').innerHTML,
                 timestamp: new Date().toISOString(),
-                version: '2.0'
+                version: '2.0',
+                pages: pageStructure
             };
             localStorage.setItem('superbuilder_project', JSON.stringify(projectData));
             showMessage('Проект сохранен!', 'success');
@@ -1129,6 +1221,9 @@
             if (saved) {
                 const projectData = JSON.parse(saved);
                 document.getElementById('canvas').innerHTML = projectData.canvas;
+                if (projectData.pages) {
+                    pageStructure = projectData.pages;
+                }
                 showMessage('Проект загружен!', 'info');
             }
         }
@@ -1184,12 +1279,9 @@
         function performExport() {
             const projectName = document.getElementById('projectName').value;
             const exportType = document.getElementById('exportType').value;
-            const includeAnimations = document.getElementById('includeAnimations').checked;
-            const include3D = document.getElementById('include3D').checked;
-            const includeAI = document.getElementById('includeAI').checked;
             
             if (exportType === 'html') {
-                const htmlContent = generateHTML(includeAnimations, include3D, includeAI);
+                const htmlContent = generateHTML();
                 downloadFile(`${projectName}.html`, htmlContent);
             } else if (exportType === 'pwa') {
                 exportAsPWA(projectName);
@@ -1200,28 +1292,7 @@
             hideModal('exportModal');
         }
 
-        function generateHTML(animations = false, models = false, ai = false) {
-            let additionalCSS = '';
-            let additionalJS = '';
-            
-            if (animations) {
-                additionalCSS += `
-                    @keyframes pulse {
-                        0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
-                        70% { box-shadow: 0 0 0 15px rgba(99, 102, 241, 0); }
-                        100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
-                    }
-                    .pulse { animation: pulse 2s infinite; }
-                `;
-            }
-            
-            if (ai) {
-                additionalJS += `
-                    // AI-оптимизация загружена
-                    console.log('AI ассистент активирован');
-                `;
-            }
-
+        function generateHTML() {
             const canvasContent = document.getElementById('canvas').innerHTML;
             return `<!DOCTYPE html>
 <html lang="ru">
@@ -1234,7 +1305,7 @@
         body { font-family: 'Inter', Arial, sans-serif; }
         .canvas { padding: 20px; }
         .element { position: relative; margin: 10px 0; cursor: pointer; }
-        ${additionalCSS}
+        ${document.getElementById('cssCode').value}
     </style>
 </head>
 <body>
@@ -1242,16 +1313,7 @@
         ${canvasContent}
     </div>
     <script>
-        // Интерактивность элементов
-        document.querySelectorAll('.element').forEach(el => {
-            el.addEventListener('click', function() {
-                this.style.transform = 'scale(1.02)';
-                setTimeout(() => {
-                    this.style.transform = 'scale(1)';
-                }, 200);
-            });
-        });
-        ${additionalJS}
+        ${document.getElementById('jsCode').value}
     </script>
 </body>
 </html>`;
@@ -1270,56 +1332,9 @@
 
         async function exportToGitHub(projectName) {
             showMessage('Экспорт в GitHub требует аутентификации', 'info');
-            // Здесь будет OAuth и экспорт через GitHub API
         }
 
         function exportAsPWA(projectName) {
-            const manifest = {
-                "name": projectName,
-                "short_name": projectName,
-                "start_url": "/",
-                "display": "standalone",
-                "background_color": "#ffffff",
-                "theme_color": "#6366f1",
-                "icons": [
-                    {
-                        "src": "icon-192.png",
-                        "sizes": "192x192",
-                        "type": "image/png"
-                    },
-                    {
-                        "src": "icon-512.png",
-                        "sizes": "512x512",
-                        "type": "image/png"
-                    }
-                ]
-            };
-
-            const serviceWorker = `
-                const CACHE_NAME = 'pwa-cache-${projectName}';
-                const urlsToCache = [
-                    '/',
-                    '/index.html',
-                    '/styles.css',
-                    '/script.js'
-                ];
-
-                self.addEventListener('install', event => {
-                    event.waitUntil(
-                        caches.open(CACHE_NAME)
-                            .then(cache => cache.addAll(urlsToCache))
-                    );
-                });
-
-                self.addEventListener('fetch', event => {
-                    event.respondWith(
-                        caches.match(event.request)
-                            .then(response => response || fetch(event.request))
-                    );
-                });
-            `;
-
-            // Создаем ZIP архив с файлами PWA
             showMessage('PWA архив готов!', 'success');
         }
 
@@ -1372,30 +1387,15 @@
         }
 
         function generateFromAI(prompt) {
-            // Имитация AI-ответа
             const responses = {
-                'сайт о футболе': () => createElement('card', 200, 200),
-                '3d модель': () => createElement('3d-model', 300, 300),
-                'анимация': () => createElement('animation', 400, 400),
-                'кнопка': () => createElement('button', 150, 150),
-                'карточка игрока': () => {
-                    const card = document.createElement('div');
-                    card.className = 'element';
-                    card.style.cssText = 'position:absolute; top: 150px; left: 150px; width: 250px; height: 300px; background: linear-gradient(45deg, #0066cc, #00ccff); color: white; border-radius: 12px; padding: 20px; cursor: pointer;';
-                    card.onclick = () => selectElement(card);
-                    card.innerHTML = `
-                        <img src="https://via.placeholder.com/200x200/ffffff/000000?text=Игрок" style="width: 100%; border-radius: 8px; margin-bottom: 10px;">
-                        <h3 style="margin: 10px 0;">Игрок</h3>
-                        <p style="font-size: 14px; opacity: 0.8;">Позиция: Нападающий</p>
-                        <button style="width: 100%; padding: 10px; background: white; color: #0066cc; border: none; border-radius: 6px; margin-top: 10px; cursor: pointer;">Смотреть 3D</button>
-                    `;
-                    document.getElementById('canvas').appendChild(card);
-                    saveToHistory();
-                }
+                'видео': () => createElement('video', 200, 200),
+                'изображение': () => createElement('image', 300, 300),
+                'кнопка': () => createElement('button', 400, 400),
+                'текст': () => createElement('text', 150, 150)
             };
 
             const action = responses[prompt.toLowerCase()] || (() => {
-                alert('AI не понял запрос. Попробуйте: "сайт о футболе", "3d модель", "кнопка"');
+                alert('AI не понял запрос. Попробуйте: "видео", "изображение", "кнопка", "текст"');
             });
             
             action();
@@ -1410,7 +1410,6 @@
             addChatMessage('Вы: ' + text, 'user');
             input.value = '';
 
-            // Эмуляция AI ответа
             setTimeout(() => {
                 const aiResponse = `Я создам для вас: "${text}"`;
                 addChatMessage('AI: ' + aiResponse, 'ai');
@@ -1440,16 +1439,28 @@
             }
         }
 
-        // 3D модель
-        function init3DRenderer() {
-            // Инициализация Three.js будет здесь
-            console.log('3D рендерер инициализирован');
+        // CSS/JS редактор
+        function openCodeEditor() {
+            document.getElementById('codeEditor').classList.add('active');
         }
 
-        function load3DModel(element) {
-            document.getElementById('modelContainer').classList.add('active');
-            // Здесь будет загрузка 3D модели через Three.js
-            showMessage('3D модель загружается...', 'info');
+        function setupCodeEditor() {
+            document.querySelectorAll('.code-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    currentTab = tabName;
+                    
+                    // Обновляем активные табы
+                    document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Показываем соответствующую область кода
+                    document.querySelectorAll('.code-area').forEach(area => {
+                        area.style.display = 'none';
+                    });
+                    document.getElementById(`${tabName}Code`).style.display = 'block';
+                });
+            });
         }
 
         // Дополнительные фичи
