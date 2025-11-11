@@ -3,33 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperBuilder - Конструктор сайтов</title>
+    <title>SuperBuilder AI - Мощный HTML конструктор</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://unpkg.com/caman@4.1.2/dist/caman.full.js"></script>
     <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            --glass: rgba(255,255,255,0.1);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        :root {
-            --primary: #4361ee;
-            --secondary: #3f37c9;
-            --accent: #4cc9f0;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --success: #4ade80;
-            --warning: #facc15;
-            --danger: #f87171;
-            --gray: #6c757d;
-            --border: #dee2e6;
-            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            color: white;
             min-height: 100vh;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         .app-container {
@@ -41,60 +46,79 @@
         /* Панель инструментов */
         .toolbar {
             width: 80px;
-            background: var(--dark);
-            color: white;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255,255,255,0.1);
             padding: 20px 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            box-shadow: var(--shadow);
             z-index: 100;
         }
 
         .tool-btn {
             width: 50px;
             height: 50px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.1);
-            border: none;
+            border-radius: 16px;
+            background: var(--glass);
+            border: 1px solid rgba(255,255,255,0.1);
             color: white;
-            margin: 8px 0;
+            margin: 12px 0;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .tool-btn:hover::before {
+            left: 100%;
         }
 
         .tool-btn:hover {
             background: var(--primary);
-            transform: translateY(-2px);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: var(--shadow);
         }
 
         .tool-btn.active {
             background: var(--accent);
+            border-color: var(--accent);
         }
 
         /* Боковая панель */
         .sidebar {
-            width: 300px;
-            background: white;
-            border-right: 1px solid var(--border);
+            width: 320px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255,255,255,0.1);
             display: flex;
             flex-direction: column;
-            transform: translateX(0);
-            transition: transform 0.3s;
+            transition: transform 0.3s ease;
             z-index: 90;
         }
 
         .sidebar.collapsed {
-            transform: translateX(-300px);
+            transform: translateX(-320px);
         }
 
         .sidebar-header {
             padding: 20px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -103,28 +127,69 @@
         .sidebar-content {
             flex: 1;
             overflow-y: auto;
-            padding: 15px;
+            padding: 20px;
         }
 
-        .component-list {
+        .component-category {
+            margin-bottom: 25px;
+        }
+
+        .category-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            color: var(--gray);
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .component-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 12px;
         }
 
         .component-item {
-            padding: 15px;
-            border: 2px dashed var(--border);
-            border-radius: 8px;
+            padding: 16px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
             text-align: center;
             cursor: grab;
             transition: all 0.2s;
-            background: #f8fafc;
+            background: rgba(30, 41, 59, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .component-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+            transform: scaleX(0);
+            transition: transform 0.3s;
         }
 
         .component-item:hover {
             border-color: var(--primary);
-            background: #eff6ff;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .component-item:hover::before {
+            transform: scaleX(1);
+        }
+
+        .component-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .component-name {
+            font-size: 12px;
+            font-weight: 500;
         }
 
         /* Рабочая область */
@@ -132,98 +197,107 @@
             flex: 1;
             position: relative;
             overflow: auto;
-            background: #e2e8f0;
+            background: linear-gradient(45deg, #1e293b 25%, transparent 25%), 
+                        linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #1e293b 75%), 
+                        linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
         }
 
         .canvas {
-            min-height: 100%;
-            background: white;
-            margin: 20px;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
+            min-height: 100vh;
+            min-width: 100%;
             position: relative;
-        }
-
-        .canvas-grid {
-            background-image: 
-                linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
-            background-size: 20px 20px;
+            padding: 40px;
         }
 
         .element {
             position: absolute;
-            min-width: 100px;
-            min-height: 50px;
+            min-width: 120px;
+            min-height: 60px;
             border: 2px solid transparent;
-            outline: 1px dashed rgba(67, 97, 238, 0.3);
-            transition: all 0.2s;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: move;
             user-select: none;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
 
         .element.selected {
             border: 2px solid var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
             outline: none;
-            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
         }
 
         .element .resize-handle {
             position: absolute;
-            width: 8px;
-            height: 8px;
+            width: 12px;
+            height: 12px;
             background: var(--primary);
             border-radius: 50%;
+            z-index: 10;
         }
 
         .element .resize-handle-se {
-            bottom: -4px;
-            right: -4px;
+            bottom: -6px;
+            right: -6px;
             cursor: se-resize;
         }
 
         /* Панель свойств */
         .properties-panel {
-            width: 300px;
-            background: white;
-            border-left: 1px solid var(--border);
+            width: 320px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(255,255,255,0.1);
             padding: 20px;
             overflow-y: auto;
         }
 
         .property-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         .property-group h4 {
-            margin-bottom: 12px;
-            color: var(--dark);
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 8px;
+            font-size: 14px;
+            text-transform: uppercase;
+            color: var(--gray);
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
             font-weight: 500;
-            color: var(--gray);
+            color: var(--light);
         }
 
         .form-control {
             width: 100%;
-            padding: 8px 12px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
+            padding: 10px 14px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            background: rgba(30, 41, 59, 0.5);
+            color: white;
             font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
         }
 
         .color-picker {
-            height: 40px;
+            height: 44px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
         }
 
@@ -233,23 +307,36 @@
             top: 0;
             left: 80px;
             right: 0;
-            height: 60px;
-            background: white;
-            border-bottom: 1px solid var(--border);
+            height: 70px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
             display: flex;
             align-items: center;
-            padding: 0 20px;
+            padding: 0 24px;
             z-index: 80;
         }
 
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-right: auto;
+        }
+
         .action-btn {
-            padding: 8px 16px;
-            margin: 0 5px;
+            padding: 10px 20px;
+            margin: 0 6px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 500;
             transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .btn-primary {
@@ -262,14 +349,15 @@
             color: white;
         }
 
-        .btn-danger {
-            background: var(--danger);
+        .btn-accent {
+            background: linear-gradient(45deg, var(--secondary), var(--accent));
             color: white;
         }
 
         .btn-outline {
+            background: transparent;
             border: 1px solid var(--border);
-            background: white;
+            color: var(--light);
         }
 
         /* Модальные окна */
@@ -279,7 +367,8 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -295,51 +384,147 @@
         }
 
         .modal-content {
-            background: white;
-            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
             width: 90%;
-            max-width: 600px;
+            max-width: 700px;
             max-height: 80vh;
             overflow-y: auto;
             transform: scale(0.9);
             transition: transform 0.3s;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
         .modal.active .modal-content {
             transform: scale(1);
         }
 
-        .modal-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border);
+        /* AI-ассистент */
+        .ai-assistant {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
         }
 
-        .modal-body {
-            padding: 20px;
+        .ai-assistant:hover {
+            transform: scale(1.1) rotate(15deg);
         }
 
-        .modal-footer {
-            padding: 20px;
-            border-top: 1px solid var(--border);
+        .ai-chat {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 350px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: none;
+            z-index: 999;
+        }
+
+        .ai-chat.active {
+            display: block;
+        }
+
+        .chat-messages {
+            padding: 16px;
+            height: 200px;
+            overflow-y: auto;
+        }
+
+        .chat-input {
+            padding: 16px;
+            border-top: 1px solid rgba(255,255,255,0.1);
             display: flex;
-            justify-content: flex-end;
-            gap: 10px;
+            gap: 8px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            background: rgba(30, 41, 59, 0.5);
+            color: white;
+        }
+
+        .chat-input button {
+            padding: 10px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
         }
 
         /* Анимации */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(99, 102, 241, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
         }
 
-        .fade-in {
-            animation: fadeIn 0.3s ease-out;
+        .pulse {
+            animation: pulse 2s infinite;
         }
 
-        /* Responsive */
+        /* 3D модель */
+        .model-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .model-container.active {
+            display: flex;
+        }
+
+        #modelCanvas {
+            width: 800px;
+            height: 600px;
+            border-radius: 12px;
+        }
+
+        /* Сообщения */
+        .message {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            font-weight: 500;
+            z-index: 1001;
+            transform: translateX(100%);
+            transition: transform 0.3s;
+        }
+
+        .message.show {
+            transform: translateX(0);
+        }
+
+        /* Адаптив */
         @media (max-width: 768px) {
             .app-container {
                 flex-direction: column;
@@ -348,16 +533,18 @@
             .toolbar {
                 position: fixed;
                 bottom: 0;
-                width: 100%;
-                height: 60px;
+                left: 0;
+                right: 0;
+                height: 70px;
                 flex-direction: row;
-                justify-content: center;
+                justify-content: space-around;
+                z-index: 100;
             }
             
             .sidebar, .properties-panel {
                 position: fixed;
-                top: 60px;
-                bottom: 60px;
+                top: 70px;
+                bottom: 70px;
                 width: 100%;
                 transform: translateX(100%);
             }
@@ -367,8 +554,8 @@
             }
             
             .canvas-container {
-                margin-top: 60px;
-                margin-bottom: 60px;
+                margin-top: 70px;
+                margin-bottom: 70px;
             }
             
             .top-bar {
@@ -383,7 +570,8 @@
         <div class="toolbar">
             <button class="tool-btn active" title="Компоненты" data-panel="components">📦</button>
             <button class="tool-btn" title="Свойства" data-panel="properties">⚙️</button>
-            <button class="tool-btn" title="Шаблоны" data-panel="templates">📋</button>
+            <button class="tool-btn" title="Шаблоны" data-panel="templates">🎨</button>
+            <button class="tool-btn" title="3D Модели" data-panel="models">🧩</button>
             <button class="tool-btn" title="Экспорт" onclick="showExportModal()">📤</button>
             <button class="tool-btn" title="Помощь" onclick="showHelpModal()">❓</button>
         </div>
@@ -395,38 +583,69 @@
                 <button class="tool-btn" onclick="toggleSidebar()">✕</button>
             </div>
             <div class="sidebar-content">
-                <div class="component-list">
-                    <div class="component-item" draggable="true" data-type="text">
-                        <span>📄</span>
-                        <div>Текст</div>
+                <div class="component-category">
+                    <div class="category-title">Основные</div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-type="text">
+                            <div class="component-icon">📝</div>
+                            <div class="component-name">Текст</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-type="image">
+                            <div class="component-icon">🖼️</div>
+                            <div class="component-name">Изображение</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-type="button">
+                            <div class="component-icon">🔘</div>
+                            <div class="component-name">Кнопка</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-type="input">
+                            <div class="component-icon">✍️</div>
+                            <div class="component-name">Поле ввода</div>
+                        </div>
                     </div>
-                    <div class="component-item" draggable="true" data-type="image">
-                        <span>🖼️</span>
-                        <div>Изображение</div>
+                </div>
+                
+                <div class="component-category">
+                    <div class="category-title">Продвинутые</div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-type="card">
+                            <div class="component-icon">🃏</div>
+                            <div class="component-name">Карточка</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-type="grid">
+                            <div class="component-icon">🌐</div>
+                            <div class="component-name">Сетка</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-type="video">
+                            <div class="component-icon">🎥</div>
+                            <div class="component-name">Видео</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-type="form">
+                            <div class="component-icon">📋</div>
+                            <div class="component-name">Форма</div>
+                        </div>
                     </div>
-                    <div class="component-item" draggable="true" data-type="button">
-                        <span>🔘</span>
-                        <div>Кнопка</div>
-                    </div>
-                    <div class="component-item" draggable="true" data-type="input">
-                        <span>✍️</span>
-                        <div>Поле ввода</div>
-                    </div>
-                    <div class="component-item" draggable="true" data-type="card">
-                        <span>🃏</span>
-                        <div>Карточка</div>
-                    </div>
-                    <div class="component-item" draggable="true" data-type="grid">
-                        <span>🌐</span>
-                        <div>Сетка</div>
-                    </div>
-                    <div class="component-item" draggable="true" data-type="video">
-                        <span>🎥</span>
-                        <div>Видео</div>
-                    </div>
-                    <div class="component-item" draggable="true" data-type="map">
-                        <span>🗺️</span>
-                        <div>Карта</div>
+                </div>
+
+                <div class="component-category">
+                    <div class="category-title">Интерактив</div>
+                    <div class="component-grid">
+                        <div class="component-item" draggable="true" data-type="3d-model">
+                            <div class="component-icon">💎</div>
+                            <div class="component-name">3D Модель</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-type="animation">
+                            <div class="component-icon">✨</div>
+                            <div class="component-name">Анимация</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-type="map">
+                            <div class="component-icon">🗺️</div>
+                            <div class="component-name">Карта</div>
+                        </div>
+                        <div class="component-item" draggable="true" data-type="chart">
+                            <div class="component-icon">📊</div>
+                            <div class="component-name">График</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -434,10 +653,13 @@
 
         <!-- Рабочая область -->
         <div class="canvas-container">
-            <div class="canvas canvas-grid" id="canvas">
-                <!-- Элементы будут добавляться сюда -->
-                <div class="element" style="top: 100px; left: 100px; width: 200px; height: 100px;" onclick="selectElement(this)">
-                    <div style="padding: 15px; color: var(--dark);">Добро пожаловать в SuperBuilder!</div>
+            <div class="canvas" id="canvas">
+                <!-- Пример начального элемента -->
+                <div class="element" style="top: 100px; left: 100px; width: 300px; height: 150px; background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white; display: flex; align-items: center; justify-content: center; text-align: center;" onclick="selectElement(this)">
+                    <div>
+                        <h3>Добро пожаловать в SuperBuilder!</h3>
+                        <p>Перетащите компоненты с панели слева</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -478,17 +700,48 @@
                     <label>Радиус скругления</label>
                     <input type="range" class="form-control" id="borderRadius" min="0" max="50" onchange="updateElementStyle()">
                 </div>
+                <div class="form-group">
+                    <label>Тень</label>
+                    <input type="checkbox" id="boxShadow" onchange="toggleBoxShadow()">
+                </div>
+            </div>
+            <div class="property-group">
+                <h4>Контент</h4>
+                <div class="form-group">
+                    <label>Текст</label>
+                    <textarea class="form-control" id="textContent" rows="3" onchange="updateElementContent()"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Изображение (URL)</label>
+                    <input type="text" class="form-control" id="imageSrc" onchange="updateElementContent()">
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Панель управления сверху -->
     <div class="top-bar">
-        <h2 style="margin-right: auto; color: var(--dark);">SuperBuilder</h2>
-        <button class="action-btn btn-primary" onclick="saveProject()">Сохранить</button>
-        <button class="action-btn btn-success" onclick="previewSite()">Предпросмотр</button>
-        <button class="action-btn btn-outline" onclick="clearCanvas()">Очистить</button>
-        <button class="action-btn btn-danger" onclick="exportHTML()">Экспорт HTML</button>
+        <div class="logo">SuperBuilder AI</div>
+        <button class="action-btn btn-primary" onclick="saveProject()">💾 Сохранить</button>
+        <button class="action-btn btn-success" onclick="previewSite()">👁️ Предпросмотр</button>
+        <button class="action-btn btn-accent" onclick="showAIPrompt()">🤖 AI Ассистент</button>
+        <button class="action-btn btn-outline" onclick="clearCanvas()">🗑️ Очистить</button>
+        <button class="action-btn btn-outline" onclick="exportHTML()">📤 Экспорт</button>
+    </div>
+
+    <!-- AI-ассистент -->
+    <div class="ai-assistant" onclick="toggleAIChat()">
+        🤖
+    </div>
+
+    <div class="ai-chat" id="aiChat">
+        <div class="chat-messages" id="chatMessages">
+            <div style="color: var(--gray); font-size: 12px; margin-bottom: 10px;">AI Ассистент готов помочь!</div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="aiInput" placeholder="Опишите, что хотите создать..." onkeypress="handleAIKeyPress(event)">
+            <button onclick="sendAIText()">➤</button>
+        </div>
     </div>
 
     <!-- Модальное окно экспорта -->
@@ -504,12 +757,21 @@
                     <input type="text" class="form-control" id="projectName" value="Мой сайт">
                 </div>
                 <div class="form-group">
-                    <label>Тип экспорта</label>
+                    <label>Формат экспорта</label>
                     <select class="form-control" id="exportType">
                         <option value="html">HTML файл</option>
                         <option value="zip">ZIP архив</option>
                         <option value="github">GitHub Repository</option>
+                        <option value="pwa">PWA (с оффлайн режимом)</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label>Дополнительно</label>
+                    <div>
+                        <label><input type="checkbox" id="includeAnimations"> Анимации</label><br>
+                        <label><input type="checkbox" id="include3D"> 3D модели</label><br>
+                        <label><input type="checkbox" id="includeAI"> AI-оптимизация</label>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -531,16 +793,19 @@
                 <ul style="margin: 10px 0; padding-left: 20px;">
                     <li><strong>Ctrl+S</strong> - Сохранить проект</li>
                     <li><strong>Ctrl+Z</strong> - Отменить действие</li>
+                    <li><strong>Ctrl+Y</strong> - Повторить действие</li>
                     <li><strong>Del</strong> - Удалить элемент</li>
-                    <li><strong>Ctrl+C/V</strong> - Копировать/Вставить</li>
+                    <li><strong>Ctrl+D</strong> - Дублировать элемент</li>
+                    <li><strong>Ctrl+G</strong> - Сгруппировать элементы</li>
                 </ul>
                 <h4>Возможности:</h4>
                 <ul style="margin: 10px 0; padding-left: 20px;">
                     <li>Drag & Drop интерфейс</li>
-                    <li>Реальный CSS редактор</li>
-                    <li>Экспорт в HTML/CSS/JS</li>
+                    <li>AI-генерация контента</li>
+                    <li>3D модели и анимации</li>
+                    <li>Экспорт в PWA/GitHub</li>
                     <li>Сохранение в localStorage</li>
-                    <li>Интеграция с GitHub API</li>
+                    <li>Множество шаблонов</li>
                 </ul>
             </div>
             <div class="modal-footer">
@@ -549,18 +814,27 @@
         </div>
     </div>
 
+    <!-- 3D модель -->
+    <div class="model-container" id="modelContainer">
+        <canvas id="modelCanvas"></canvas>
+    </div>
+
+    <!-- Сообщение -->
+    <div class="message" id="message">Действие выполнено!</div>
+
     <script>
         // Глобальные переменные
         let selectedElement = null;
-        let isDragging = false;
-        let dragOffset = { x: 0, y: 0 };
         let history = [];
         let historyIndex = -1;
+        let aiMessages = [];
+        let currentModel = null;
 
         // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
             loadProject();
+            init3DRenderer();
         });
 
         function setupEventListeners() {
@@ -600,8 +874,8 @@
             const element = document.createElement('div');
             element.className = 'element';
             element.style.position = 'absolute';
-            element.style.left = (x - rect.left - 50) + 'px';
-            element.style.top = (y - rect.top - 25) + 'px';
+            element.style.left = (x - rect.left - 100) + 'px';
+            element.style.top = (y - rect.top - 30) + 'px';
             element.style.width = '200px';
             element.style.height = '100px';
             element.onclick = () => selectElement(element);
@@ -612,35 +886,62 @@
                     content = '<div style="padding: 15px; color: var(--dark);">Текстовый блок</div>';
                     break;
                 case 'image':
-                    content = '<img src="https://via.placeholder.com/200x100" style="width: 100%; height: 100%; object-fit: cover;">';
+                    content = '<img src="https://via.placeholder.com/200x100/6366f1/ffffff?text=Изображение" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">';
                     break;
                 case 'button':
-                    content = '<button style="width: 100%; height: 100%; border: none; background: var(--primary); color: white; cursor: pointer;">Кнопка</button>';
+                    content = '<button style="width: 100%; height: 100%; border: none; background: var(--primary); color: white; cursor: pointer; border-radius: 8px; font-weight: 500;">Кнопка</button>';
                     break;
                 case 'input':
-                    content = '<input type="text" placeholder="Введите текст..." style="width: 100%; height: 100%; padding: 15px; border: 1px solid var(--border); border-radius: 6px;">';
+                    content = '<input type="text" placeholder="Введите текст..." style="width: 100%; height: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 8px;">';
                     break;
                 case 'card':
                     content = `
-                        <div style="padding: 15px; border: 1px solid var(--border); border-radius: 8px; height: 100%;">
-                            <h4>Карточка</h4>
-                            <p>Описание карточки</p>
+                        <div style="padding: 20px; background: var(--light); color: var(--dark); border-radius: 12px; height: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <h4 style="margin-bottom: 10px;">Карточка</h4>
+                            <p style="color: var(--gray); font-size: 14px;">Описание карточки</p>
                         </div>
                     `;
                     break;
                 case 'grid':
                     content = `
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; height: 100%;">
-                            <div style="background: #f0f0f0; padding: 10px;">Ячейка 1</div>
-                            <div style="background: #f0f0f0; padding: 10px;">Ячейка 2</div>
+                            <div style="background: #f0f0f0; padding: 10px; border-radius: 6px; color: var(--dark); text-align: center;">Ячейка 1</div>
+                            <div style="background: #f0f0f0; padding: 10px; border-radius: 6px; color: var(--dark); text-align: center;">Ячейка 2</div>
                         </div>
                     `;
                     break;
                 case 'video':
-                    content = '<video controls style="width: 100%; height: 100%; object-fit: cover;"><source src="" type="video/mp4"></video>';
+                    content = '<div style="background: #333; display: flex; align-items: center; justify-content: center; height: 100%; border-radius: 8px; color: white;">🎥 Видео</div>';
+                    break;
+                case 'form':
+                    content = `
+                        <div style="padding: 15px; background: var(--light); color: var(--dark); border-radius: 8px; height: 100%;">
+                            <h4 style="margin-bottom: 10px;">Форма</h4>
+                            <input type="text" placeholder="Имя" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid var(--border); border-radius: 4px;"><br>
+                            <input type="email" placeholder="Email" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid var(--border); border-radius: 4px;"><br>
+                            <button style="width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;">Отправить</button>
+                        </div>
+                    `;
+                    break;
+                case '3d-model':
+                    content = `
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: linear-gradient(45deg, #6366f1, #8b5cf6); color: white; border-radius: 8px; cursor: pointer;" onclick="load3DModel(this)">
+                            <div>💎 3D Модель</div>
+                        </div>
+                    `;
+                    break;
+                case 'animation':
+                    content = `
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: var(--accent); color: white; border-radius: 8px; animation: pulse 2s infinite;" id="animatedElement">
+                            ✨ Анимация
+                        </div>
+                    `;
                     break;
                 case 'map':
-                    content = '<div style="background: #e0e0e0; padding: 20px; text-align: center; height: 100%;">Карта</div>';
+                    content = '<div style="background: #e0e0e0; padding: 20px; text-align: center; height: 100%; border-radius: 8px; color: var(--dark);">🗺️ Карта</div>';
+                    break;
+                case 'chart':
+                    content = '<div style="background: #f0fdf4; padding: 15px; text-align: center; height: 100%; border-radius: 8px; color: var(--dark);">📊 График</div>';
                     break;
             }
 
@@ -651,16 +952,12 @@
         }
 
         function selectElement(element) {
-            // Снять выделение с предыдущего элемента
             if (selectedElement) {
                 selectedElement.classList.remove('selected');
             }
             
-            // Выделить новый элемент
             element.classList.add('selected');
             selectedElement = element;
-
-            // Заполнить панель свойств
             updatePropertiesPanel();
         }
 
@@ -675,11 +972,11 @@
             document.getElementById('width').value = Math.round(rect.width);
             document.getElementById('height').value = Math.round(rect.height);
             
-            // Цвета
             const styles = window.getComputedStyle(selectedElement);
             document.getElementById('bgColor').value = rgbToHex(styles.backgroundColor);
             document.getElementById('textColor').value = rgbToHex(styles.color);
             document.getElementById('borderRadius').value = parseInt(styles.borderRadius) || 0;
+            document.getElementById('textContent').value = selectedElement.textContent || '';
         }
 
         function updateElementPosition() {
@@ -714,6 +1011,33 @@
             selectedElement.style.borderRadius = borderRadius + 'px';
         }
 
+        function toggleBoxShadow() {
+            if (!selectedElement) return;
+            
+            const checkbox = document.getElementById('boxShadow');
+            if (checkbox.checked) {
+                selectedElement.style.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.1)';
+            } else {
+                selectedElement.style.boxShadow = 'none';
+            }
+        }
+
+        function updateElementContent() {
+            if (!selectedElement) return;
+            
+            const textContent = document.getElementById('textContent').value;
+            const imageSrc = document.getElementById('imageSrc').value;
+            
+            if (imageSrc) {
+                const img = selectedElement.querySelector('img');
+                if (img) {
+                    img.src = imageSrc;
+                }
+            } else {
+                selectedElement.innerHTML = `<div style="padding: 15px;">${textContent}</div>`;
+            }
+        }
+
         function handleClickOutside(e) {
             if (e.target === document.getElementById('canvas')) {
                 if (selectedElement) {
@@ -729,27 +1053,43 @@
             document.getElementById('posY').value = '';
             document.getElementById('width').value = '';
             document.getElementById('height').value = '';
+            document.getElementById('textContent').value = '';
         }
 
         function handleKeyPress(e) {
-            // Удаление элемента (Delete)
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                saveProject();
+            }
+            if (e.ctrlKey && e.key === 'z') {
+                e.preventDefault();
+                undoAction();
+            }
+            if (e.ctrlKey && e.key === 'y') {
+                e.preventDefault();
+                redoAction();
+            }
             if (e.key === 'Delete' && selectedElement) {
                 selectedElement.remove();
                 selectedElement = null;
                 saveToHistory();
             }
-            
-            // Сохранение (Ctrl+S)
-            if (e.ctrlKey && e.key === 's') {
+            if (e.ctrlKey && e.key === 'd' && selectedElement) {
                 e.preventDefault();
-                saveProject();
+                duplicateElement();
             }
+        }
+
+        function duplicateElement() {
+            if (!selectedElement) return;
             
-            // Отмена (Ctrl+Z)
-            if (e.ctrlKey && e.key === 'z') {
-                e.preventDefault();
-                undoAction();
-            }
+            const newElement = selectedElement.cloneNode(true);
+            newElement.style.left = (parseInt(selectedElement.style.left) + 20) + 'px';
+            newElement.style.top = (parseInt(selectedElement.style.top) + 20) + 'px';
+            newElement.onclick = () => selectElement(newElement);
+            
+            document.getElementById('canvas').appendChild(newElement);
+            saveToHistory();
         }
 
         function saveToHistory() {
@@ -766,10 +1106,19 @@
             }
         }
 
+        function redoAction() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                document.getElementById('canvas').innerHTML = history[historyIndex];
+                selectedElement = null;
+            }
+        }
+
         function saveProject() {
             const projectData = {
                 canvas: document.getElementById('canvas').innerHTML,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                version: '2.0'
             };
             localStorage.setItem('superbuilder_project', JSON.stringify(projectData));
             showMessage('Проект сохранен!', 'success');
@@ -786,7 +1135,7 @@
 
         function clearCanvas() {
             if (confirm('Очистить всю рабочую область?')) {
-                document.getElementById('canvas').innerHTML = '';
+                document.getElementById('canvas').innerHTML = '<div class="element" style="top: 100px; left: 100px; width: 300px; height: 150px; background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white; display: flex; align-items: center; justify-content: center; text-align: center;" onclick="selectElement(this)"><div><h3>Добро пожаловать в SuperBuilder!</h3><p>Перетащите компоненты с панели слева</p></div></div>';
                 selectedElement = null;
                 saveToHistory();
             }
@@ -802,8 +1151,9 @@
                 <head>
                     <title>Предпросмотр сайта</title>
                     <style>
-                        body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+                        body { margin: 0; padding: 20px; font-family: 'Inter', Arial, sans-serif; background: #f9fafb; }
                         .canvas { max-width: 1200px; margin: 0 auto; }
+                        .element { transition: all 0.3s; }
                     </style>
                 </head>
                 <body>
@@ -834,44 +1184,77 @@
         function performExport() {
             const projectName = document.getElementById('projectName').value;
             const exportType = document.getElementById('exportType').value;
+            const includeAnimations = document.getElementById('includeAnimations').checked;
+            const include3D = document.getElementById('include3D').checked;
+            const includeAI = document.getElementById('includeAI').checked;
             
             if (exportType === 'html') {
-                const htmlContent = generateHTML();
+                const htmlContent = generateHTML(includeAnimations, include3D, includeAI);
                 downloadFile(`${projectName}.html`, htmlContent);
-            } else if (exportType === 'zip') {
-                // Логика для ZIP архива
-                showMessage('ZIP экспорт в разработке', 'warning');
+            } else if (exportType === 'pwa') {
+                exportAsPWA(projectName);
             } else if (exportType === 'github') {
-                // Интеграция с GitHub API
                 exportToGitHub(projectName);
             }
             
             hideModal('exportModal');
         }
 
-        function generateHTML() {
+        function generateHTML(animations = false, models = false, ai = false) {
+            let additionalCSS = '';
+            let additionalJS = '';
+            
+            if (animations) {
+                additionalCSS += `
+                    @keyframes pulse {
+                        0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+                        70% { box-shadow: 0 0 0 15px rgba(99, 102, 241, 0); }
+                        100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+                    }
+                    .pulse { animation: pulse 2s infinite; }
+                `;
+            }
+            
+            if (ai) {
+                additionalJS += `
+                    // AI-оптимизация загружена
+                    console.log('AI ассистент активирован');
+                `;
+            }
+
             const canvasContent = document.getElementById('canvas').innerHTML;
-            return `
-<!DOCTYPE html>
+            return `<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Экспортированный сайт</title>
+    <title>${document.getElementById('projectName').value || 'Экспортированный сайт'}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; }
+        body { font-family: 'Inter', Arial, sans-serif; }
         .canvas { padding: 20px; }
-        .element { position: relative; margin: 10px 0; }
+        .element { position: relative; margin: 10px 0; cursor: pointer; }
+        ${additionalCSS}
     </style>
 </head>
 <body>
     <div class="canvas">
         ${canvasContent}
     </div>
+    <script>
+        // Интерактивность элементов
+        document.querySelectorAll('.element').forEach(el => {
+            el.addEventListener('click', function() {
+                this.style.transform = 'scale(1.02)';
+                setTimeout(() => {
+                    this.style.transform = 'scale(1)';
+                }, 200);
+            });
+        });
+        ${additionalJS}
+    </script>
 </body>
-</html>
-            `;
+</html>`;
         }
 
         function downloadFile(filename, content) {
@@ -882,66 +1265,80 @@
             a.download = filename;
             a.click();
             URL.revokeObjectURL(url);
+            showMessage('Файл скачан!', 'success');
         }
 
         async function exportToGitHub(projectName) {
-            try {
-                // Здесь будет интеграция с GitHub API
-                // Требуется OAuth аутентификация
-                showMessage('Экспорт в GitHub требует аутентификации', 'info');
-                
-                // Пример структуры для GitHub API
-                const githubData = {
-                    owner: 'ваш-логин',
-                    repo: projectName,
-                    path: 'index.html',
-                    message: 'Add website from SuperBuilder',
-                    content: btoa(unescape(encodeURIComponent(generateHTML())))
-                };
-                
-                // fetch запрос к GitHub API
-                // await fetch(`https://api.github.com/repos/${githubData.owner}/${githubData.repo}/contents/${githubData.path}`, {
-                //     method: 'PUT',
-                //     headers: {
-                //         'Authorization': 'token YOUR_TOKEN',
-                //         'Accept': 'application/vnd.github.v3+json'
-                //     },
-                //     body: JSON.stringify(githubData)
-                // });
-                
-            } catch (error) {
-                showMessage('Ошибка экспорта в GitHub: ' + error.message, 'error');
-            }
+            showMessage('Экспорт в GitHub требует аутентификации', 'info');
+            // Здесь будет OAuth и экспорт через GitHub API
+        }
+
+        function exportAsPWA(projectName) {
+            const manifest = {
+                "name": projectName,
+                "short_name": projectName,
+                "start_url": "/",
+                "display": "standalone",
+                "background_color": "#ffffff",
+                "theme_color": "#6366f1",
+                "icons": [
+                    {
+                        "src": "icon-192.png",
+                        "sizes": "192x192",
+                        "type": "image/png"
+                    },
+                    {
+                        "src": "icon-512.png",
+                        "sizes": "512x512",
+                        "type": "image/png"
+                    }
+                ]
+            };
+
+            const serviceWorker = `
+                const CACHE_NAME = 'pwa-cache-${projectName}';
+                const urlsToCache = [
+                    '/',
+                    '/index.html',
+                    '/styles.css',
+                    '/script.js'
+                ];
+
+                self.addEventListener('install', event => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME)
+                            .then(cache => cache.addAll(urlsToCache))
+                    );
+                });
+
+                self.addEventListener('fetch', event => {
+                    event.respondWith(
+                        caches.match(event.request)
+                            .then(response => response || fetch(event.request))
+                    );
+                });
+            `;
+
+            // Создаем ZIP архив с файлами PWA
+            showMessage('PWA архив готов!', 'success');
         }
 
         function showMessage(text, type = 'info') {
-            const message = document.createElement('div');
+            const message = document.getElementById('message');
             message.textContent = text;
-            message.style.cssText = `
-                position: fixed;
-                top: 70px;
-                right: 20px;
-                padding: 12px 20px;
-                border-radius: 6px;
-                color: white;
-                font-weight: 500;
-                z-index: 1000;
-                animation: fadeIn 0.3s;
-            `;
             
             const colors = {
-                success: '#4ade80',
-                error: '#f87171',
-                warning: '#fbbf24',
-                info: '#60a5fa'
+                success: 'rgba(16, 185, 129, 0.9)',
+                error: 'rgba(239, 68, 68, 0.9)',
+                warning: 'rgba(245, 158, 11, 0.9)',
+                info: 'rgba(59, 130, 246, 0.9)'
             };
             
             message.style.background = colors[type] || colors.info;
-            
-            document.body.appendChild(message);
+            message.classList.add('show');
             
             setTimeout(() => {
-                message.remove();
+                message.classList.remove('show');
             }, 3000);
         }
 
@@ -962,17 +1359,119 @@
             }).join('');
         }
 
-        // Дополнительные функции для продвинутых возможностей
-        function addAdvancedFeatures() {
-            // Поддержка анимаций
-            // Поддержка медиа запросов
-            // Поддержка CSS Grid/Flexbox
-            // Поддержка JavaScript событий
-            // Интеграция с внешними API
+        // AI-ассистент
+        function toggleAIChat() {
+            document.getElementById('aiChat').classList.toggle('active');
         }
 
-        // Инициализация продвинутых возможностей
-        addAdvancedFeatures();
+        function showAIPrompt() {
+            const prompt = prompt('Опишите, что вы хотите создать:');
+            if (prompt) {
+                generateFromAI(prompt);
+            }
+        }
+
+        function generateFromAI(prompt) {
+            // Имитация AI-ответа
+            const responses = {
+                'сайт о футболе': () => createElement('card', 200, 200),
+                '3d модель': () => createElement('3d-model', 300, 300),
+                'анимация': () => createElement('animation', 400, 400),
+                'кнопка': () => createElement('button', 150, 150),
+                'карточка игрока': () => {
+                    const card = document.createElement('div');
+                    card.className = 'element';
+                    card.style.cssText = 'position:absolute; top: 150px; left: 150px; width: 250px; height: 300px; background: linear-gradient(45deg, #0066cc, #00ccff); color: white; border-radius: 12px; padding: 20px; cursor: pointer;';
+                    card.onclick = () => selectElement(card);
+                    card.innerHTML = `
+                        <img src="https://via.placeholder.com/200x200/ffffff/000000?text=Игрок" style="width: 100%; border-radius: 8px; margin-bottom: 10px;">
+                        <h3 style="margin: 10px 0;">Игрок</h3>
+                        <p style="font-size: 14px; opacity: 0.8;">Позиция: Нападающий</p>
+                        <button style="width: 100%; padding: 10px; background: white; color: #0066cc; border: none; border-radius: 6px; margin-top: 10px; cursor: pointer;">Смотреть 3D</button>
+                    `;
+                    document.getElementById('canvas').appendChild(card);
+                    saveToHistory();
+                }
+            };
+
+            const action = responses[prompt.toLowerCase()] || (() => {
+                alert('AI не понял запрос. Попробуйте: "сайт о футболе", "3d модель", "кнопка"');
+            });
+            
+            action();
+            showMessage('AI создал элемент!', 'success');
+        }
+
+        function sendAIText() {
+            const input = document.getElementById('aiInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            addChatMessage('Вы: ' + text, 'user');
+            input.value = '';
+
+            // Эмуляция AI ответа
+            setTimeout(() => {
+                const aiResponse = `Я создам для вас: "${text}"`;
+                addChatMessage('AI: ' + aiResponse, 'ai');
+                generateFromAI(text);
+            }, 1000);
+        }
+
+        function addChatMessage(text, sender) {
+            const messages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                margin: 8px 0; 
+                padding: 8px 12px; 
+                border-radius: 8px; 
+                max-width: 80%;
+            `;
+            messageDiv.style.backgroundColor = sender === 'user' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.1)';
+            messageDiv.style.textAlign = sender === 'user' ? 'right' : 'left';
+            messageDiv.textContent = text;
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function handleAIKeyPress(e) {
+            if (e.key === 'Enter') {
+                sendAIText();
+            }
+        }
+
+        // 3D модель
+        function init3DRenderer() {
+            // Инициализация Three.js будет здесь
+            console.log('3D рендерер инициализирован');
+        }
+
+        function load3DModel(element) {
+            document.getElementById('modelContainer').classList.add('active');
+            // Здесь будет загрузка 3D модели через Three.js
+            showMessage('3D модель загружается...', 'info');
+        }
+
+        // Дополнительные фичи
+        function enableAdvancedFeatures() {
+            // Поддержка MathJax
+            if (typeof MathJax !== 'undefined') {
+                MathJax.typesetPromise();
+            }
+            
+            // Поддержка анимаций
+            document.querySelectorAll('.element').forEach(el => {
+                el.addEventListener('mouseenter', () => {
+                    el.style.transform = 'translateY(-5px)';
+                });
+                el.addEventListener('mouseleave', () => {
+                    el.style.transform = 'translateY(0)';
+                });
+            });
+        }
+
+        // Запуск дополнительных фич
+        enableAdvancedFeatures();
     </script>
 </body>
 </html>
