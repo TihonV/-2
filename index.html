@@ -88,7 +88,7 @@
         .canvas {
             min-height: 100%;
             min-width: 100%;
-            background: url('https://assets.website-files.com/60f9f1e5d716fc7ed536831f/6100c235a571269a33657643_grid.svg   ');
+            background: url('https://assets.website-files.com/60f9f1e5d716fc7ed536831f/6100c235a571269a33657643_grid.svg');
             border-radius: 12px;
             position: relative;
         }
@@ -194,6 +194,28 @@
             cursor: pointer;
         }
 
+        /* Контекстное меню */
+        .context-menu {
+            position: fixed;
+            background: var(--dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 0;
+            z-index: 3000;
+            display: none;
+            box-shadow: var(--shadow);
+        }
+
+        .context-menu-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .context-menu-item:hover {
+            background: var(--primary);
+        }
+
         /* Защита от копирования */
         .protection {
             position: fixed;
@@ -257,6 +279,14 @@
     </div>
 </div>
 
+<!-- Контекстное меню -->
+<div class="context-menu" id="contextMenu">
+    <div class="context-menu-item" onclick="duplicateElement()">📋 Дублировать</div>
+    <div class="context-menu-item" onclick="deleteElement()">🗑️ Удалить</div>
+    <div class="context-menu-item" onclick="bringToFront()">🔝 На передний план</div>
+    <div class="context-menu-item" onclick="sendToBack()">🔽 На задний план</div>
+</div>
+
 <!-- Авторство -->
 <div class="author">© 2025 Tihon Metelkin — SuperBuilder AI</div>
 
@@ -290,6 +320,7 @@
 <script>
     let draggedType = null;
     let selectedElement = null;
+    let canvas = document.getElementById('canvas');
 
     // --- DRAG & DROP ---
     function allowDrop(e) {
@@ -305,7 +336,7 @@
     function drop(e) {
         e.preventDefault();
         const type = draggedType;
-        const rect = document.getElementById('canvas').getBoundingClientRect();
+        const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
@@ -320,6 +351,7 @@
         el.style.top = y + 'px';
         el.draggable = true;
         el.onclick = () => selectElement(el);
+        el.oncontextmenu = (e) => showContextMenu(e, el); // Добавлено контекстное меню
 
         switch (type) {
             case 'text':
@@ -360,7 +392,7 @@
                 break;
         }
 
-        document.getElementById('canvas').appendChild(el);
+        canvas.appendChild(el);
         selectElement(el);
     }
 
@@ -446,12 +478,40 @@
                 <input type="range" min="0" max="800" value="${Math.round(rect.top)}" oninput="moveElement(this, 'y')">
             </div>
             <div class="form-group">
+                <label>Ширина: ${el.offsetWidth}</label>
+                <input type="range" min="50" max="500" value="${el.offsetWidth}" oninput="resizeElement(this, 'width')">
+            </div>
+            <div class="form-group">
+                <label>Высота: ${el.offsetHeight}</label>
+                <input type="range" min="30" max="300" value="${el.offsetHeight}" oninput="resizeElement(this, 'height')">
+            </div>
+            <div class="form-group">
                 <label>Фон (URL)</label>
-                <input type="text" placeholder="URL фона" oninput="setBackground(this)" value="${el.style.backgroundImage || ''}" style="background-image: ${el.style.backgroundImage}">
+                <input type="text" placeholder="URL фона" oninput="setBackground(this)" value="${el.style.backgroundImage.replace('url(', '').replace(')', '').replace(/"/g, '') || ''}">
+            </div>
+            <div class="form-group">
+                <label>Цвет фона</label>
+                <input type="color" oninput="setBackgroundColor(this)" value="${el.style.backgroundColor || '#ffffff'}">
             </div>
             <div class="form-group">
                 <label>Цвет текста</label>
-                <input type="color" oninput="setTextColor(this)" value="#000000">
+                <input type="color" oninput="setTextColor(this)" value="${el.style.color || '#000000'}">
+            </div>
+            <div class="form-group">
+                <label>Радиус скругления</label>
+                <input type="range" min="0" max="50" value="${parseInt(el.style.borderRadius) || 0}" oninput="setBorderRadius(this)">
+            </div>
+            <div class="form-group">
+                <label>Тень</label>
+                <input type="checkbox" onchange="toggleShadow(this)">
+            </div>
+            <div class="form-group">
+                <label>Визуальный редактор CSS</label>
+                <textarea class="form-control" placeholder="background: red; color: blue;" style="height: 80px;" oninput="applyCSS(this)"></textarea>
+            </div>
+            <div class="form-group">
+                <label>JavaScript код</label>
+                <textarea class="form-control" placeholder="console.log('Привет');" style="height: 60px;" oninput="applyJS(this)"></textarea>
             </div>
         `;
 
@@ -473,6 +533,13 @@
         showProperties(selectedElement);
     }
 
+    function resizeElement(input, dimension) {
+        if (!selectedElement) return;
+        const value = input.value;
+        selectedElement.style[dimension] = value + 'px';
+        showProperties(selectedElement);
+    }
+
     function setBackground(input) {
         if (!selectedElement) return;
         const url = input.value;
@@ -481,9 +548,46 @@
         selectedElement.style.backgroundPosition = 'center';
     }
 
+    function setBackgroundColor(input) {
+        if (!selectedElement) return;
+        selectedElement.style.backgroundColor = input.value;
+    }
+
     function setTextColor(input) {
         if (!selectedElement) return;
         selectedElement.style.color = input.value;
+    }
+
+    function setBorderRadius(input) {
+        if (!selectedElement) return;
+        selectedElement.style.borderRadius = input.value + 'px';
+    }
+
+    function toggleShadow(checkbox) {
+        if (!selectedElement) return;
+        selectedElement.style.boxShadow = checkbox.checked ? '0 4px 6px rgba(0,0,0,0.1)' : 'none';
+    }
+
+    function applyCSS(textarea) {
+        if (!selectedElement) return;
+        const css = textarea.value;
+        if (css) {
+            const style = css.split(';').filter(s => s.trim()).map(s => s.trim());
+            style.forEach(rule => {
+                const [prop, val] = rule.split(':');
+                if (prop && val) {
+                    selectedElement.style.setProperty(prop.trim(), val.trim());
+                }
+            });
+        }
+    }
+
+    function applyJS(textarea) {
+        if (!selectedElement) return;
+        const js = textarea.value;
+        if (js) {
+            selectedElement.setAttribute('onclick', js);
+        }
     }
 
     function updateButtonText(input) {
@@ -491,23 +595,93 @@
         selectedElement.querySelector('input[type="text"]').value = input.value;
     }
 
+    // --- КОНТЕКСТНОЕ МЕНЮ ---
+    function showContextMenu(e, el) {
+        e.preventDefault();
+        selectElement(el);
+        
+        const menu = document.getElementById('contextMenu');
+        menu.style.display = 'block';
+        menu.style.left = e.pageX + 'px';
+        menu.style.top = e.pageY + 'px';
+    }
+
+    function duplicateElement() {
+        if (!selectedElement) return;
+        
+        const newEl = selectedElement.cloneNode(true);
+        newEl.style.left = (parseInt(selectedElement.style.left) + 20) + 'px';
+        newEl.style.top = (parseInt(selectedElement.style.top) + 20) + 'px';
+        newEl.onclick = () => selectElement(newEl);
+        newEl.oncontextmenu = (e) => showContextMenu(e, newEl);
+        
+        canvas.appendChild(newEl);
+        document.getElementById('contextMenu').style.display = 'none';
+    }
+
+    function deleteElement() {
+        if (!selectedElement) return;
+        selectedElement.remove();
+        selectedElement = null;
+        document.getElementById('property-panel').innerHTML = 'Выберите элемент';
+        document.getElementById('contextMenu').style.display = 'none';
+    }
+
+    function bringToFront() {
+        if (!selectedElement) return;
+        selectedElement.style.zIndex = 1000;
+        document.getElementById('contextMenu').style.display = 'none';
+    }
+
+    function sendToBack() {
+        if (!selectedElement) return;
+        selectedElement.style.zIndex = 1;
+        document.getElementById('contextMenu').style.display = 'none';
+    }
+
     // --- СОХРАНЕНИЕ И ЗАГРУЗКА ---
     function saveProject() {
-        const canvas = document.getElementById('canvas');
-        localStorage.setItem('superbuilder_project', canvas.innerHTML);
+        const data = {
+            elements: [],
+            timestamp: new Date().toISOString()
+        };
+        
+        canvas.querySelectorAll('.element').forEach(el => {
+            data.elements.push({
+                html: el.innerHTML,
+                style: el.style.cssText,
+                left: el.style.left,
+                top: el.style.top,
+                width: el.style.width,
+                height: el.style.height
+            });
+        });
+        
+        localStorage.setItem('superbuilder_project', JSON.stringify(data));
         showMessage('✅ Проект сохранён');
     }
 
     function loadProject() {
         const saved = localStorage.getItem('superbuilder_project');
         if (saved) {
-            document.getElementById('canvas').innerHTML = saved;
-            document.querySelectorAll('.element').forEach(el => {
+            const data = JSON.parse(saved);
+            canvas.innerHTML = '';
+            
+            data.elements.forEach(elData => {
+                const el = document.createElement('div');
+                el.className = 'element';
+                el.innerHTML = elData.html;
+                el.style.cssText = elData.style;
+                el.style.left = elData.left;
+                el.style.top = elData.top;
+                el.style.width = elData.width;
+                el.style.height = elData.height;
                 el.onclick = () => selectElement(el);
-                if (el.innerHTML.includes('Ссылка')) {
-                    el.oninput = updateButtonLogic;
-                }
+                el.oncontextmenu = (e) => showContextMenu(e, el);
+                
+                canvas.appendChild(el);
             });
+            
             showMessage('📥 Проект загружен');
         } else {
             showMessage('❌ Нет сохранённых проектов');
@@ -516,7 +690,7 @@
 
     function clearCanvas() {
         if (confirm('Очистить всё?')) {
-            document.getElementById('canvas').innerHTML = '';
+            canvas.innerHTML = '';
             selectedElement = null;
             document.getElementById('property-panel').innerHTML = 'Холст пуст';
         }
@@ -574,7 +748,7 @@
     function generateHTMLContent() {
         return `<!DOCTYPE html>
 <html><head><title>SuperBuilder Export</title></head>
-<body>${document.getElementById('canvas').innerHTML}</body>
+<body>${canvas.innerHTML}</body>
 </html>`;
     }
 
@@ -652,6 +826,13 @@
             const modifiedText = originalText + '\n\n=== КОПИРОВАНИЕ ЗАПРЕЩЕНО © TIHON METELKIN ===\n\n';
             e.clipboardData.setData('text/plain', modifiedText);
             alert('Копирование изменено для защиты © Tihon Metelkin');
+        });
+        
+        // Закрытие контекстного меню при клике вне его
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.context-menu')) {
+                document.getElementById('contextMenu').style.display = 'none';
+            }
         });
     });
 </script>
