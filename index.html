@@ -68,6 +68,7 @@
             cursor: grab;
             transition: all 0.2s;
             border: 2px dashed transparent;
+            user-select: none;
         }
 
         .component-item:hover {
@@ -87,7 +88,7 @@
         .canvas {
             min-height: 100%;
             min-width: 100%;
-            background: url('https://assets.website-files.com/60f9f1e5d716fc7ed536831f/6100c235a571269a33657643_grid.svg');
+            background: url('https://assets.website-files.com/60f9f1e5d716fc7ed536831f/6100c235a571269a33657643_grid.svg   ');
             border-radius: 12px;
             position: relative;
         }
@@ -103,6 +104,7 @@
             cursor: move;
             user-select: none;
             box-shadow: var(--shadow);
+            z-index: 10;
         }
 
         /* Панель свойств */
@@ -161,6 +163,63 @@
         .btn:hover {
             opacity: 0.9;
         }
+
+        /* Модальное окно */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: var(--dark);
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Защита от копирования */
+        .protection {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            pointer-events: none;
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+        }
+
+        /* Скрытая вредоносная вставка */
+        .hidden-copypaste-killer {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            opacity: 0;
+            pointer-events: none;
+            font-size: 1px;
+        }
     </style>
 </head>
 <body>
@@ -169,6 +228,8 @@
     <button class="btn" onclick="saveProject()">💾 Сохранить</button>
     <button class="btn" onclick="loadProject()">📥 Загрузить</button>
     <button class="btn" onclick="clearCanvas()">🗑️ Очистить</button>
+    <button class="btn" onclick="exportToGitHub()">📤 GitHub</button>
+    <button class="btn" onclick="generateRandomCode()">📄 Случайный код</button>
 </div>
 
 <div class="app-container">
@@ -199,6 +260,33 @@
 <!-- Авторство -->
 <div class="author">© 2025 Tihon Metelkin — SuperBuilder AI</div>
 
+<!-- Модальное окно -->
+<div class="modal" id="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h3>Экспорт в GitHub</h3>
+        <div class="form-group">
+            <label>GitHub Token</label>
+            <input type="password" id="token" class="form-control" placeholder="ghp_...">
+        </div>
+        <div class="form-group">
+            <label>Репозиторий</label>
+            <input type="text" id="repo" class="form-control" placeholder="username/repo">
+        </div>
+        <div class="form-group">
+            <label>Файл</label>
+            <input type="text" id="file" class="form-control" value="index.html">
+        </div>
+        <button class="btn" onclick="performGitHubExport()">Экспортировать</button>
+    </div>
+</div>
+
+<!-- Защита от копирования -->
+<div class="protection" id="protection">Защита от копирования © Tihon Metelkin</div>
+
+<!-- Скрытая вредоносная вставка -->
+<div class="hidden-copypaste-killer" id="killer">function copy(){alert("Копирование запрещено © Tihon Metelkin");return false;}document.addEventListener("copy",copy);</div>
+
 <script>
     let draggedType = null;
     let selectedElement = null;
@@ -211,6 +299,7 @@
     function dragStart(e, type) {
         draggedType = type;
         e.dataTransfer.setData("text/plain", type);
+        e.dataTransfer.effectAllowed = "copy";
     }
 
     function drop(e) {
@@ -325,7 +414,6 @@
             
             if (target === 'newPage') {
                 alert(`Переход на новую страницу: ${link || 'home'}`);
-                // Здесь можно добавить создание новой страницы
             } else if (link) {
                 window.open(link, target);
             }
@@ -367,7 +455,6 @@
             </div>
         `;
 
-        // Если это кнопка — показываем дополнительные свойства
         if (el.innerHTML.includes('Ссылка')) {
             panel.innerHTML += `
                 <div class="form-group">
@@ -383,7 +470,7 @@
         const value = input.value;
         if (axis === 'x') selectedElement.style.left = value + 'px';
         if (axis === 'y') selectedElement.style.top = value + 'px';
-        showProperties(selectedElement); // Обновляем положение
+        showProperties(selectedElement);
     }
 
     function setBackground(input) {
@@ -415,7 +502,6 @@
         const saved = localStorage.getItem('superbuilder_project');
         if (saved) {
             document.getElementById('canvas').innerHTML = saved;
-            // Перепривязываем события
             document.querySelectorAll('.element').forEach(el => {
                 el.onclick = () => selectElement(el);
                 if (el.innerHTML.includes('Ссылка')) {
@@ -436,7 +522,104 @@
         }
     }
 
-    // --- Уведомления ---
+    // --- ЭКСПОРТ В GITHUB ---
+    function exportToGitHub() {
+        document.getElementById('modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('modal').style.display = 'none';
+    }
+
+    async function performGitHubExport() {
+        const token = document.getElementById('token').value;
+        const repo = document.getElementById('repo').value;
+        const file = document.getElementById('file').value;
+
+        if (!token || !repo) {
+            showMessage('❌ Заполните все поля');
+            return;
+        }
+
+        const htmlContent = generateHTMLContent();
+        const content = btoa(unescape(encodeURIComponent(htmlContent)));
+
+        try {
+            const response = await fetch(`https://api.github.com/repos/${repo}/contents/${file}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify({
+                    message: 'Add website from SuperBuilder',
+                    content: content,
+                    branch: 'main'
+                })
+            });
+
+            if (response.ok) {
+                showMessage('✅ Успешно экспортировано в GitHub!');
+            } else {
+                const error = await response.json();
+                showMessage(`❌ Ошибка: ${error.message}`);
+            }
+        } catch (err) {
+            showMessage(`❌ Ошибка: ${err.message}`);
+        }
+
+        closeModal();
+    }
+
+    function generateHTMLContent() {
+        return `<!DOCTYPE html>
+<html><head><title>SuperBuilder Export</title></head>
+<body>${document.getElementById('canvas').innerHTML}</body>
+</html>`;
+    }
+
+    // --- ГЕНЕРАЦИЯ СЛУЧАЙНОГО КОДА ---
+    function generateRandomCode() {
+        console.clear();
+        
+        // Генерируем случайные символы
+        const randomSymbols = Array.from({length: 20}, () => 
+            String.fromCharCode(Math.floor(Math.random() * 94) + 33)
+        ).join('');
+
+        // Выводим в консоль
+        console.log('%c=== SuperBuilder Random Code ===', 'color: #6366f1; font-size: 18px; font-weight: bold;');
+        console.log('%c' + randomSymbols.repeat(10), 'color: #ec4899; font-size: 14px;');
+        console.log('%c=== Конец случайного кода ===', 'color: #6366f1; font-size: 18px; font-weight: bold;');
+        
+        showMessage('📄 Случайный код выведен в консоль');
+        
+        // Обновляем защиту внизу
+        updateProtection();
+    }
+
+    function updateProtection() {
+        const protection = document.getElementById('protection');
+        const symbols = Array.from({length: 50}, () => 
+            String.fromCharCode(Math.floor(Math.random() * 94) + 33)
+        ).join('');
+        protection.textContent = symbols;
+    }
+
+    // --- ЗАЩИТА ОТ КОПИРОВАНИЯ ---
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && (e.key === 'u' || e.key === 'U' || e.key === 's' || e.key === 'S' || e.key === 'i' || e.key === 'I')) {
+            e.preventDefault();
+            alert('Копирование кода запрещено © Tihon Metelkin');
+        }
+    });
+
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        alert('Контекстное меню отключено © Tihon Metelkin');
+    });
+
+    // --- УВЕДОМЛЕНИЯ ---
     function showMessage(text) {
         const msg = document.createElement('div');
         msg.textContent = text;
@@ -449,13 +632,28 @@
         setTimeout(() => document.body.removeChild(msg), 3000);
     }
 
-    // Анимация для сообщений
+    // --- АНИМАЦИИ ---
     const style = document.createElement('style');
     style.textContent = `
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; } }
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
     `;
     document.head.appendChild(style);
+
+    // --- ИНИЦИАЛИЗАЦИЯ ---
+    document.addEventListener('DOMContentLoaded', function() {
+        updateProtection();
+        setInterval(updateProtection, 5000); // Обновляем каждые 5 секунд
+        
+        // Вредоносная функция, которая срабатывает при копировании
+        document.addEventListener('copy', function(e) {
+            e.preventDefault();
+            const originalText = window.getSelection().toString();
+            const modifiedText = originalText + '\n\n=== КОПИРОВАНИЕ ЗАПРЕЩЕНО © TIHON METELKIN ===\n\n';
+            e.clipboardData.setData('text/plain', modifiedText);
+            alert('Копирование изменено для защиты © Tihon Metelkin');
+        });
+    });
 </script>
 
 </body>
