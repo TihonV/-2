@@ -3,848 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperBuilder AI - Мощный HTML конструктор</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <script src="https://unpkg.com/caman@4.1.2/dist/caman.full.js"></script>
-    <!-- Добавляем crypto-js для хэширования пароля -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    <title>Простой HTML Конструктор</title>
     <style>
-        :root {
-            --primary: #6366f1;
-            --secondary: #8b5cf6;
-            --accent: #ec4899;
-            --dark: #1f2937;
-            --light: #f9fafb;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --gray: #6b7280;
-            --border: #e5e7eb;
-            --shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
-            --glass: rgba(255,255,255,0.1);
-        }
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
-            color: white;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        .app-container {
+            font-family: Arial, sans-serif;
             display: flex;
+            flex-direction: column;
             height: 100vh;
-            position: relative;
+            background-color: #f0f0f0;
         }
-        /* Панель инструментов */
         .toolbar {
-            width: 80px;
-            background: rgba(30, 41, 59, 0.95);
-            backdrop-filter: blur(10px);
-            border-right: 1px solid rgba(255,255,255,0.1);
-            padding: 20px 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 100;
-        }
-        .tool-btn {
-            width: 50px;
-            height: 50px;
-            border-radius: 16px;
-            background: var(--glass);
-            border: 1px solid rgba(255,255,255,0.1);
+            background-color: #333;
             color: white;
-            margin: 12px 0;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            position: relative;
-            overflow: hidden;
-        }
-        .tool-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-        .tool-btn:hover::before {
-            left: 100%;
-        }
-        .tool-btn:hover {
-            background: var(--primary);
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: var(--shadow);
-        }
-        .tool-btn.active {
-            background: var(--accent);
-            border-color: var(--accent);
-        }
-        /* Боковая панель */
-        .sidebar {
-            width: 320px;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border-right: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.3s ease;
-            z-index: 90;
-        }
-        .sidebar.collapsed {
-            transform: translateX(-320px);
-        }
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .sidebar-content {
+        .toolbar button {
+            padding: 8px 16px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        .main-container {
+            display: flex;
             flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-        }
-        .component-category {
-            margin-bottom: 25px;
-        }
-        .category-title {
-            font-size: 14px;
-            text-transform: uppercase;
-            color: var(--gray);
-            margin-bottom: 12px;
-            letter-spacing: 0.5px;
-        }
-        .component-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-        .component-item {
-            padding: 16px;
-            border: 2px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            text-align: center;
-            cursor: grab;
-            transition: all 0.2s;
-            background: rgba(30, 41, 59, 0.5);
-            position: relative;
             overflow: hidden;
         }
-        .component-item::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--primary);
-            transform: scaleX(0);
-            transition: transform 0.3s;
+        .sidebar {
+            width: 200px;
+            background-color: #e0e0e0;
+            padding: 15px;
+            overflow-y: auto;
+            border-right: 1px solid #ccc;
         }
-        .component-item:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
+        .component-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #d0d0d0;
+            border: 1px solid #bbb;
+            cursor: grab;
+            text-align: center;
         }
-        .component-item:hover::before {
-            transform: scaleX(1);
-        }
-        .component-icon {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-        .component-name {
-            font-size: 12px;
-            font-weight: 500;
-        }
-        /* Рабочая область */
         .canvas-container {
             flex: 1;
-            position: relative;
+            padding: 20px;
             overflow: auto;
-            background: linear-gradient(45deg, #1e293b 25%, transparent 25%), 
-                        linear-gradient(-45deg, #1e293b 25%, transparent 25%), 
-                        linear-gradient(45deg, transparent 75%, #1e293b 75%), 
-                        linear-gradient(-45deg, transparent 75%, #1e293b 75%);
-            background-size: 20px 20px;
-            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-color: #f9f9f9;
         }
         .canvas {
-            min-height: 100vh;
+            min-height: 100%;
             min-width: 100%;
-            position: relative;
-            padding: 40px;
+            background-color: white;
+            border: 1px dashed #ccc;
         }
         .element {
             position: absolute;
-            min-width: 120px;
-            min-height: 60px;
-            border: 2px solid transparent;
-            border-radius: 8px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #fff;
             cursor: move;
             user-select: none;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
         .element.selected {
-            border: 2px solid var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
-            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
         }
-        .element .resize-handle {
-            position: absolute;
-            width: 12px;
-            height: 12px;
-            background: var(--primary);
-            border-radius: 50%;
-            z-index: 10;
-        }
-        .element .resize-handle-se {
-            bottom: -6px;
-            right: -6px;
-            cursor: se-resize;
-        }
-        /* Панель свойств */
         .properties-panel {
-            width: 320px;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border-left: 1px solid rgba(255,255,255,0.1);
-            padding: 20px;
+            width: 250px;
+            background-color: #e0e0e0;
+            padding: 15px;
             overflow-y: auto;
+            border-left: 1px solid #ccc;
         }
-        .property-group {
-            margin-bottom: 25px;
-        }
-        .property-group h4 {
-            font-size: 14px;
-            text-transform: uppercase;
-            color: var(--gray);
+        .properties-group {
             margin-bottom: 15px;
-            letter-spacing: 0.5px;
         }
-        .form-group {
-            margin-bottom: 16px;
-        }
-        .form-group label {
+        .properties-group label {
             display: block;
-            margin-bottom: 6px;
-            font-weight: 500;
-            color: var(--light);
+            margin-bottom: 5px;
+            font-weight: bold;
         }
-        .form-control {
+        .properties-group textarea, .properties-group input {
             width: 100%;
-            padding: 10px 14px;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            background: rgba(30, 41, 59, 0.5);
-            color: white;
-            font-size: 14px;
-            transition: border-color 0.2s;
+            padding: 5px;
         }
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        .color-picker {
-            height: 44px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        /* Панель управления */
-        .top-bar {
-            position: fixed;
-            top: 0;
-            left: 80px;
-            right: 0;
-            height: 70px;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-            padding: 0 24px;
-            z-index: 80;
-        }
-        .logo {
-            font-size: 20px;
-            font-weight: 700;
-            background: linear-gradient(45deg, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-right: auto;
-        }
-        .action-btn {
-            padding: 10px 20px;
-            margin: 0 6px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-        .btn-accent {
-            background: linear-gradient(45deg, var(--secondary), var(--accent));
-            color: white;
-        }
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--light);
-        }
-        /* Модальные окна */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s;
-        }
-        .modal.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-        .modal-content {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            width: 90%;
-            max-width: 500px; /* Уменьшил ширину для форм */
-            max-height: 80vh;
-            overflow-y: auto;
-            transform: scale(0.9);
-            transition: transform 0.3s;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .modal.active .modal-content {
-            transform: scale(1);
-        }
-        .modal-header {
-            padding: 20px 20px 0 20px;
-        }
-        .modal-body {
-            padding: 20px;
-        }
-        .modal-footer {
-            padding: 15px 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-        /* AI-ассистент */
-        .ai-assistant {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(45deg, var(--primary), var(--accent));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 1000;
-            box-shadow: var(--shadow);
-            transition: all 0.3s;
-        }
-        .ai-assistant:hover {
-            transform: scale(1.1) rotate(15deg);
-        }
-        .ai-chat {
-            position: fixed;
-            bottom: 90px;
-            right: 20px;
-            width: 350px;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.1);
-            display: none;
-            z-index: 999;
-        }
-        .ai-chat.active {
-            display: block;
-        }
-        .chat-messages {
-            padding: 16px;
-            height: 200px;
-            overflow-y: auto;
-        }
-        .chat-input {
-            padding: 16px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            gap: 8px;
-        }
-        .chat-input input {
-            flex: 1;
-            padding: 10px 14px;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            background: rgba(30, 41, 59, 0.5);
-            color: white;
-        }
-        .chat-input button {
-            padding: 10px 16px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        /* Анимации */
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
-            70% { box-shadow: 0 0 0 15px rgba(99, 102, 241, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
-        }
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-        /* 3D модель */
-        .model-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            display: none;
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-        }
-        .model-container.active {
-            display: flex;
-        }
-        #modelCanvas {
-            width: 800px;
-            height: 600px;
-            border-radius: 12px;
-        }
-        /* Сообщения */
         .message {
             position: fixed;
-            top: 80px;
+            top: 70px; /* Под панелью инструментов */
             right: 20px;
-            padding: 16px 24px;
-            border-radius: 12px;
-            background: rgba(16, 185, 129, 0.9);
+            padding: 10px 20px;
+            border-radius: 4px;
             color: white;
-            font-weight: 500;
-            z-index: 1001;
-            transform: translateX(100%);
-            transition: transform 0.3s;
+            font-weight: bold;
+            display: none; /* Скрыто по умолчанию */
         }
-        .message.show {
-            transform: translateX(0);
+        .message.success {
+            background-color: #28a745;
         }
-        /* Адаптив */
-        @media (max-width: 768px) {
-            .app-container {
-                flex-direction: column;
-            }
-            .toolbar {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                height: 70px;
-                flex-direction: row;
-                justify-content: space-around;
-                z-index: 100;
-            }
-            .sidebar, .properties-panel {
-                position: fixed;
-                top: 70px;
-                bottom: 70px;
-                width: 100%;
-                transform: translateX(100%);
-            }
-            .sidebar.active, .properties-panel.active {
-                transform: translateX(0);
-            }
-            .canvas-container {
-                margin-top: 70px;
-                margin-bottom: 70px;
-            }
-            .top-bar {
-                left: 0;
-            }
+        .message.error {
+            background-color: #dc3545;
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Панель инструментов -->
-        <div class="toolbar">
-            <button class="tool-btn active" title="Компоненты" data-panel="components">📦</button>
-            <button class="tool-btn" title="Свойства" data-panel="properties">⚙️</button>
-            <button class="tool-btn" title="Шаблоны" data-panel="templates">🎨</button>
-            <button class="tool-btn" title="3D Модели" data-panel="models">🧩</button>
-            <button class="tool-btn" title="Экспорт" onclick="showExportModal()">📤</button>
-            <button class="tool-btn" title="Помощь" onclick="showHelpModal()">❓</button>
+    <div class="toolbar">
+        <h2>Простой HTML Конструктор</h2>
+        <div>
+            <button onclick="downloadHTML()">📥 Скачать HTML</button>
         </div>
-        <!-- Боковая панель -->
+    </div>
+    <div class="main-container">
         <div class="sidebar">
-            <div class="sidebar-header">
-                <h3>Компоненты</h3>
-                <button class="tool-btn" onclick="toggleSidebar()">✕</button>
-            </div>
-            <div class="sidebar-content">
-                <div class="component-category">
-                    <div class="category-title">Основные</div>
-                    <div class="component-grid">
-                        <div class="component-item" draggable="true" data-type="text">
-                            <div class="component-icon">📝</div>
-                            <div class="component-name">Текст</div>
-                        </div>
-                        <div class="component-item" draggable="true" data-type="image">
-                            <div class="component-icon">🖼️</div>
-                            <div class="component-name">Изображение</div>
-                        </div>
-                        <div class="component-item" draggable="true" data-type="button">
-                            <div class="component-icon">🔘</div>
-                            <div class="component-name">Кнопка</div>
-                        </div>
-                        <div class="component-item" draggable="true" data-type="input">
-                            <div class="component-icon">✍️</div>
-                            <div class="component-name">Поле ввода</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="component-category">
-                    <div class="category-title">Продвинутые</div>
-                    <div class="component-grid">
-                        <div class="component-item" draggable="true" data-type="card">
-                            <div class="component-icon">🃏</div>
-                            <div class="component-name">Карточка</div>
-                        </div>
-                        <div class="component-item" draggable="true" data-type="grid">
-                            <div class="component-icon">🌐</div>
-                            <div class="component-name">Сетка</div>
-                        </div>
-                        <div class="component-item" draggable="true" data-type="video">
-                            <div class="component-icon">🎥</div>
-                            <div class="component-name">Видео</div>
-                        </div>
-                        <div class="component-item" draggable="true" data-type="form">
-                            <div class="component-icon">📋</div>
-                            <div class="component-name">Форма</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="component-category">
-                    <div class="category-title">Интерактив</div>
-                    <div class="component-grid">
-                        <div class="component-item" draggable="true" data-type="3d-model">
-                            <div class="component-icon">💎</div>
-                            <div class="component-name">3D Модель</div>
-                        </div>
-                        <div class="component-item" draggable="true" data-type="animation">
-                            <div class="component-icon">✨</div>
-                            <div class="component-name">Анимация</div>
-                        </div>
-                        <div class="component-item" draggable="true" data-type="map">
-                            <div class="component-icon">🗺️</div>
-                            <div class="component-name">Карта</div>
-                        </div>
-                        <div class="component-item" draggable="true" data-type="chart">
-                            <div class="component-icon">📊</div>
-                            <div class="component-name">График</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <h3>Компоненты</h3>
+            <div class="component-item" draggable="true" data-type="text">📝 Текст</div>
+            <div class="component-item" draggable="true" data-type="image">🖼️ Изображение</div>
+            <div class="component-item" draggable="true" data-type="button">🔘 Кнопка</div>
         </div>
-        <!-- Рабочая область -->
         <div class="canvas-container">
             <div class="canvas" id="canvas">
-                <!-- Пример начального элемента -->
-                <div class="element" style="top: 100px; left: 100px; width: 300px; height: 150px; background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white; display: flex; align-items: center; justify-content: center; text-align: center;" onclick="selectElement(this)">
-                    <div>
-                        <h3>Добро пожаловать в SuperBuilder!</h3>
-                        <p>Перетащите компоненты с панели слева</p>
-                    </div>
-                </div>
+                <!-- Элементы будут добавляться сюда -->
             </div>
         </div>
-        <!-- Панель свойств -->
         <div class="properties-panel">
-            <h3>Свойства элемента</h3>
-            <div class="property-group">
-                <h4>Позиция и размер</h4>
-                <div class="form-group">
-                    <label>X</label>
-                    <input type="number" class="form-control" id="posX" onchange="updateElementPosition()">
-                </div>
-                <div class="form-group">
-                    <label>Y</label>
-                    <input type="number" class="form-control" id="posY" onchange="updateElementPosition()">
-                </div>
-                <div class="form-group">
-                    <label>Ширина</label>
-                    <input type="number" class="form-control" id="width" onchange="updateElementSize()">
-                </div>
-                <div class="form-group">
-                    <label>Высота</label>
-                    <input type="number" class="form-control" id="height" onchange="updateElementSize()">
-                </div>
-            </div>
-            <div class="property-group">
-                <h4>Стили</h4>
-                <div class="form-group">
-                    <label>Цвет фона</label>
-                    <input type="color" class="form-control color-picker" id="bgColor" onchange="updateElementStyle()">
-                </div>
-                <div class="form-group">
-                    <label>Цвет текста</label>
-                    <input type="color" class="form-control color-picker" id="textColor" onchange="updateElementStyle()">
-                </div>
-                <div class="form-group">
-                    <label>Радиус скругления</label>
-                    <input type="range" class="form-control" id="borderRadius" min="0" max="50" onchange="updateElementStyle()">
-                </div>
-                <div class="form-group">
-                    <label>Тень</label>
-                    <input type="checkbox" id="boxShadow" onchange="toggleBoxShadow()">
-                </div>
-            </div>
-            <div class="property-group">
-                <h4>Контент</h4>
-                <div class="form-group">
-                    <label>Текст</label>
-                    <textarea class="form-control" id="textContent" rows="3" onchange="updateElementContent()"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Изображение (URL)</label>
-                    <input type="text" class="form-control" id="imageSrc" onchange="updateElementContent()">
-                </div>
+            <h3>Свойства</h3>
+            <div class="properties-group">
+                <label for="elementContent">Содержимое:</label>
+                <textarea id="elementContent" rows="5" onchange="updateElementContent()"></textarea>
             </div>
         </div>
     </div>
-    <!-- Панель управления сверху -->
-    <div class="top-bar">
-        <div class="logo">SuperBuilder AI</div>
-        <button class="action-btn btn-primary" onclick="saveProject()">💾 Сохранить</button>
-        <button class="action-btn btn-success" onclick="previewSite()">👁️ Предпросмотр</button>
-        <button class="action-btn btn-accent" onclick="showAIPrompt()">🤖 AI Ассистент</button>
-        <button class="action-btn btn-outline" onclick="clearCanvas()">🗑️ Очистить</button>
-        <button class="action-btn btn-outline" onclick="exportHTML()">📤 Экспорт</button>
-        <!-- Кнопки для регистрации и входа -->
-        <button class="action-btn btn-outline" onclick="showRegisterModal()">📝 Регистрация</button>
-        <button class="action-btn btn-outline" onclick="showLoginModal()">🔐 Вход</button>
-        <!-- Отображение информации о пользователе после входа -->
-        <div id="user-info" style="display: none; margin-left: 15px;">
-            <span id="user-name-display">Имя пользователя</span>
-            <button class="action-btn btn-outline" onclick="logout()">Выйти</button>
-        </div>
-    </div>
-    <!-- AI-ассистент -->
-    <div class="ai-assistant" onclick="toggleAIChat()">
-        🤖
-    </div>
-    <div class="ai-chat" id="aiChat">
-        <div class="chat-messages" id="chatMessages">
-            <div style="color: var(--gray); font-size: 12px; margin-bottom: 10px;">AI Ассистент готов помочь!</div>
-        </div>
-        <div class="chat-input">
-            <input type="text" id="aiInput" placeholder="Опишите, что хотите создать..." onkeypress="handleAIKeyPress(event)">
-            <button onclick="sendAIText()">➤</button>
-        </div>
-    </div>
-    <!-- Модальное окно регистрации -->
-    <div class="modal" id="registerModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Регистрация</h3>
-                <button onclick="hideModal('registerModal')" class="tool-btn">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Логин</label>
-                    <input type="text" class="form-control" id="reg-login" required>
-                </div>
-                <div class="form-group">
-                    <label>Пароль</label>
-                    <input type="password" class="form-control" id="reg-password" required>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="action-btn btn-outline" onclick="hideModal('registerModal')">Отмена</button>
-                <button class="action-btn btn-primary" onclick="registerUser()">Зарегистрироваться</button>
-            </div>
-        </div>
-    </div>
-    <!-- Модальное окно входа -->
-    <div class="modal" id="loginModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Вход</h3>
-                <button onclick="hideModal('loginModal')" class="tool-btn">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Логин</label>
-                    <input type="text" class="form-control" id="login-username" required>
-                </div>
-                <div class="form-group">
-                    <label>Пароль</label>
-                    <input type="password" class="form-control" id="login-password" required>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="action-btn btn-outline" onclick="hideModal('loginModal')">Отмена</button>
-                <button class="action-btn btn-primary" onclick="loginUser()">Войти</button>
-            </div>
-        </div>
-    </div>
-    <!-- Модальное окно экспорта -->
-    <div class="modal" id="exportModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Экспорт проекта</h3>
-                <button onclick="hideModal('exportModal')" class="tool-btn">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Название проекта</label>
-                    <input type="text" class="form-control" id="projectName" value="Мой сайт">
-                </div>
-                <div class="form-group">
-                    <label>Формат экспорта</label>
-                    <select class="form-control" id="exportType">
-                        <option value="html">HTML файл</option>
-                        <option value="zip">ZIP архив</option>
-                        <option value="github">GitHub Repository</option>
-                        <option value="pwa">PWA (с оффлайн режимом)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Дополнительно</label>
-                    <div>
-                        <label><input type="checkbox" id="includeAnimations"> Анимации</label><br>
-                        <label><input type="checkbox" id="include3D"> 3D модели</label><br>
-                        <label><input type="checkbox" id="includeAI"> AI-оптимизация</label>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="action-btn btn-outline" onclick="hideModal('exportModal')">Отмена</button>
-                <button class="action-btn btn-primary" onclick="performExport()">Экспорт</button>
-            </div>
-        </div>
-    </div>
-    <!-- Модальное окно помощи -->
-    <div class="modal" id="helpModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Помощь по SuperBuilder</h3>
-                <button onclick="hideModal('helpModal')" class="tool-btn">×</button>
-            </div>
-            <div class="modal-body">
-                <h4>Горячие клавиши:</h4>
-                <ul style="margin: 10px 0; padding-left: 20px;">
-                    <li><strong>Ctrl+S</strong> - Сохранить проект</li>
-                    <li><strong>Ctrl+Z</strong> - Отменить действие</li>
-                    <li><strong>Ctrl+Y</strong> - Повторить действие</li>
-                    <li><strong>Del</strong> - Удалить элемент</li>
-                    <li><strong>Ctrl+D</strong> - Дублировать элемент</li>
-                    <li><strong>Ctrl+G</strong> - Сгруппировать элементы</li>
-                </ul>
-                <h4>Возможности:</h4>
-                <ul style="margin: 10px 0; padding-left: 20px;">
-                    <li>Drag & Drop интерфейс</li>
-                    <li>AI-генерация контента</li>
-                    <li>3D модели и анимации</li>
-                    <li>Экспорт в PWA/GitHub</li>
-                    <li>Сохранение в localStorage</li>
-                    <li>Множество шаблонов</li>
-                </ul>
-            </div>
-            <div class="modal-footer">
-                <button class="action-btn btn-primary" onclick="hideModal('helpModal')">Понятно</button>
-            </div>
-        </div>
-    </div>
-    <!-- 3D модель -->
-    <div class="model-container" id="modelContainer">
-        <canvas id="modelCanvas"></canvas>
-    </div>
-    <!-- Сообщение -->
-    <div class="message" id="message">Действие выполнено!</div>
-    <script>
-        // Глобальные переменные
-        let selectedElement = null;
-        let history = [];
-        let historyIndex = -1;
-        let aiMessages = [];
-        let currentModel = null;
-        // Используем ваш URL
-        const API_URL = 'https://script.google.com/macros/s/AKfycbwTQ64-1YNbLX98eCMjHkGSFAwnIer6Gks2RN6Y3GvICHZ-x85L2JSvCCEjQiZHqL4ANw/exec';
+    <div class="message" id="message"></div>
 
-        // Инициализация
+    <script>
+        let selectedElement = null;
+
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
-            loadProject();
-            init3DRenderer();
-            // Проверяем, был ли пользователь залогинен ранее (например, через localStorage)
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser) {
-                currentUser = savedUser;
-                showUserInfo(savedUser);
-            }
+            // Добавляем один начальный элемент для примера
+            createElement('text', 100, 100, 'Привет из конструктора!');
         });
 
         function setupEventListeners() {
-            // Перетаскивание компонентов
             document.querySelectorAll('.component-item').forEach(item => {
                 item.addEventListener('dragstart', handleDragStart);
             });
-            // Рабочая область
             const canvas = document.getElementById('canvas');
             canvas.addEventListener('dragover', handleDragOver);
             canvas.addEventListener('drop', handleDrop);
-            canvas.addEventListener('click', handleClickOutside);
-            // Клавиши
-            document.addEventListener('keydown', handleKeyPress);
+            canvas.addEventListener('click', (e) => {
+                if (e.target.classList.contains('element')) {
+                    selectElement(e.target);
+                } else if (e.target === canvas) {
+                    // Снять выделение, если кликнули мимо элементов
+                    if (selectedElement) {
+                        selectedElement.classList.remove('selected');
+                        selectedElement = null;
+                        document.getElementById('elementContent').value = '';
+                    }
+                }
+            });
         }
 
         function handleDragStart(e) {
@@ -858,88 +181,38 @@
         function handleDrop(e) {
             e.preventDefault();
             const type = e.dataTransfer.getData('text/plain');
-            createElement(type, e.clientX, e.clientY);
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left - 50; // Смещение для центрирования
+            const y = e.clientY - rect.top - 15;  // Смещение для центрирования
+            createElement(type, x, y);
         }
 
-        function createElement(type, x, y) {
+        function createElement(type, x, y, initialText = '') {
             const canvas = document.getElementById('canvas');
-            const rect = canvas.getBoundingClientRect();
             const element = document.createElement('div');
             element.className = 'element';
-            element.style.position = 'absolute';
-            element.style.left = (x - rect.left - 100) + 'px';
-            element.style.top = (y - rect.top - 30) + 'px';
+            element.style.left = x + 'px';
+            element.style.top = y + 'px';
             element.style.width = '200px';
-            element.style.height = '100px';
-            element.onclick = () => selectElement(element);
-            let content = '';
-            switch(type) {
-                case 'text':
-                    content = '<div style="padding: 15px; color: var(--dark);">Текстовый блок</div>';
-                    break;
-                case 'image':
-                    content = '<img src="https://via.placeholder.com/200x100/6366f1/ffffff?text=Изображение" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">';
-                    break;
-                case 'button':
-                    content = '<button style="width: 100%; height: 100%; border: none; background: var(--primary); color: white; cursor: pointer; border-radius: 8px; font-weight: 500;">Кнопка</button>';
-                    break;
-                case 'input':
-                    content = '<input type="text" placeholder="Введите текст..." style="width: 100%; height: 100%; padding: 15px; border: 2px solid var(--border); border-radius: 8px;">';
-                    break;
-                case 'card':
-                    content = `
-                        <div style="padding: 20px; background: var(--light); color: var(--dark); border-radius: 12px; height: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                            <h4 style="margin-bottom: 10px;">Карточка</h4>
-                            <p style="color: var(--gray); font-size: 14px;">Описание карточки</p>
-                        </div>
-                    `;
-                    break;
-                case 'grid':
-                    content = `
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; height: 100%;">
-                            <div style="background: #f0f0f0; padding: 10px; border-radius: 6px; color: var(--dark); text-align: center;">Ячейка 1</div>
-                            <div style="background: #f0f0f0; padding: 10px; border-radius: 6px; color: var(--dark); text-align: center;">Ячейка 2</div>
-                        </div>
-                    `;
-                    break;
-                case 'video':
-                    content = '<div style="background: #333; display: flex; align-items: center; justify-content: center; height: 100%; border-radius: 8px; color: white;">🎥 Видео</div>';
-                    break;
-                case 'form':
-                    content = `
-                        <div style="padding: 15px; background: var(--light); color: var(--dark); border-radius: 8px; height: 100%;">
-                            <h4 style="margin-bottom: 10px;">Форма</h4>
-                            <input type="text" placeholder="Имя" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid var(--border); border-radius: 4px;"><br>
-                            <input type="email" placeholder="Email" style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid var(--border); border-radius: 4px;"><br>
-                            <button style="width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer;">Отправить</button>
-                        </div>
-                    `;
-                    break;
-                case '3d-model':
-                    content = `
-                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: linear-gradient(45deg, #6366f1, #8b5cf6); color: white; border-radius: 8px; cursor: pointer;" onclick="load3DModel(this)">
-                            <div>💎 3D Модель</div>
-                        </div>
-                    `;
-                    break;
-                case 'animation':
-                    content = `
-                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: var(--accent); color: white; border-radius: 8px; animation: pulse 2s infinite;" id="animatedElement">
-                            ✨ Анимация
-                        </div>
-                    `;
-                    break;
-                case 'map':
-                    content = '<div style="background: #e0e0e0; padding: 20px; text-align: center; height: 100%; border-radius: 8px; color: var(--dark);">🗺️ Карта</div>';
-                    break;
-                case 'chart':
-                    content = '<div style="background: #f0fdf4; padding: 15px; text-align: center; height: 100%; border-radius: 8px; color: var(--dark);">📊 График</div>';
-                    break;
+            element.style.height = 'auto';
+
+            let content = initialText;
+            if (!initialText) {
+                switch(type) {
+                    case 'text':
+                        content = 'Текстовый блок';
+                        break;
+                    case 'image':
+                        content = '<img src="https://via.placeholder.com/200x100" alt="Placeholder Image" style="width: 100%;">';
+                        break;
+                    case 'button':
+                        content = '<button>Кнопка</button>';
+                        break;
+                }
             }
             element.innerHTML = content;
             canvas.appendChild(element);
-            selectElement(element);
-            saveToHistory();
+            element.onclick = () => selectElement(element);
         }
 
         function selectElement(element) {
@@ -948,587 +221,55 @@
             }
             element.classList.add('selected');
             selectedElement = element;
-            updatePropertiesPanel();
-        }
-
-        function updatePropertiesPanel() {
-            if (!selectedElement) return;
-            const rect = selectedElement.getBoundingClientRect();
-            const canvasRect = document.getElementById('canvas').getBoundingClientRect();
-            document.getElementById('posX').value = Math.round(rect.left - canvasRect.left);
-            document.getElementById('posY').value = Math.round(rect.top - canvasRect.top);
-            document.getElementById('width').value = Math.round(rect.width);
-            document.getElementById('height').value = Math.round(rect.height);
-            const styles = window.getComputedStyle(selectedElement);
-            document.getElementById('bgColor').value = rgbToHex(styles.backgroundColor);
-            document.getElementById('textColor').value = rgbToHex(styles.color);
-            document.getElementById('borderRadius').value = parseInt(styles.borderRadius) || 0;
-            document.getElementById('textContent').value = selectedElement.textContent || '';
-        }
-
-        function updateElementPosition() {
-            if (!selectedElement) return;
-            const x = document.getElementById('posX').value;
-            const y = document.getElementById('posY').value;
-            selectedElement.style.left = x + 'px';
-            selectedElement.style.top = y + 'px';
-        }
-
-        function updateElementSize() {
-            if (!selectedElement) return;
-            const width = document.getElementById('width').value;
-            const height = document.getElementById('height').value;
-            selectedElement.style.width = width + 'px';
-            selectedElement.style.height = height + 'px';
-        }
-
-        function updateElementStyle() {
-            if (!selectedElement) return;
-            const bgColor = document.getElementById('bgColor').value;
-            const textColor = document.getElementById('textColor').value;
-            const borderRadius = document.getElementById('borderRadius').value;
-            selectedElement.style.backgroundColor = bgColor;
-            selectedElement.style.color = textColor;
-            selectedElement.style.borderRadius = borderRadius + 'px';
-        }
-
-        function toggleBoxShadow() {
-            if (!selectedElement) return;
-            const checkbox = document.getElementById('boxShadow');
-            if (checkbox.checked) {
-                selectedElement.style.boxShadow = '0 10px 25px -5px rgba(0,0,0,0.1)';
-            } else {
-                selectedElement.style.boxShadow = 'none';
-            }
+            document.getElementById('elementContent').value = element.innerHTML;
         }
 
         function updateElementContent() {
-            if (!selectedElement) return;
-            const textContent = document.getElementById('textContent').value;
-            const imageSrc = document.getElementById('imageSrc').value;
-            if (imageSrc) {
-                const img = selectedElement.querySelector('img');
-                if (img) {
-                    img.src = imageSrc;
-                }
-            } else {
-                selectedElement.innerHTML = `<div style="padding: 15px;">${textContent}</div>`;
+            if (selectedElement) {
+                selectedElement.innerHTML = document.getElementById('elementContent').value;
             }
         }
 
-        function handleClickOutside(e) {
-            if (e.target === document.getElementById('canvas')) {
-                if (selectedElement) {
-                    selectedElement.classList.remove('selected');
-                    selectedElement = null;
-                    clearPropertiesPanel();
-                }
-            }
-        }
-
-        function clearPropertiesPanel() {
-            document.getElementById('posX').value = '';
-            document.getElementById('posY').value = '';
-            document.getElementById('width').value = '';
-            document.getElementById('height').value = '';
-            document.getElementById('textContent').value = '';
-        }
-
-        function handleKeyPress(e) {
-            if (e.ctrlKey && e.key === 's') {
-                e.preventDefault();
-                saveProject();
-            }
-            if (e.ctrlKey && e.key === 'z') {
-                e.preventDefault();
-                undoAction();
-            }
-            if (e.ctrlKey && e.key === 'y') {
-                e.preventDefault();
-                redoAction();
-            }
-            if (e.key === 'Delete' && selectedElement) {
-                selectedElement.remove();
-                selectedElement = null;
-                saveToHistory();
-            }
-            if (e.ctrlKey && e.key === 'd' && selectedElement) {
-                e.preventDefault();
-                duplicateElement();
-            }
-        }
-
-        function duplicateElement() {
-            if (!selectedElement) return;
-            const newElement = selectedElement.cloneNode(true);
-            newElement.style.left = (parseInt(selectedElement.style.left) + 20) + 'px';
-            newElement.style.top = (parseInt(selectedElement.style.top) + 20) + 'px';
-            newElement.onclick = () => selectElement(newElement);
-            document.getElementById('canvas').appendChild(newElement);
-            saveToHistory();
-        }
-
-        function saveToHistory() {
-            const canvasHTML = document.getElementById('canvas').innerHTML;
-            history.push(canvasHTML);
-            historyIndex = history.length - 1;
-        }
-
-        function undoAction() {
-            if (historyIndex > 0) {
-                historyIndex--;
-                document.getElementById('canvas').innerHTML = history[historyIndex] || '';
-                selectedElement = null;
-            }
-        }
-
-        function redoAction() {
-            if (historyIndex < history.length - 1) {
-                historyIndex++;
-                document.getElementById('canvas').innerHTML = history[historyIndex];
-                selectedElement = null;
-            }
-        }
-
-        function saveProject() {
-            if (!currentUser) {
-                alert("Для сохранения проекта необходимо войти.");
-                return;
-            }
-            const projectData = {
-                canvas: document.getElementById('canvas').innerHTML,
-                timestamp: new Date().toISOString(),
-                version: '2.0',
-                userId: currentUser // Пример добавления ID пользователя к проекту
-            };
-            localStorage.setItem('superbuilder_project', JSON.stringify(projectData));
-            showMessage('Проект сохранен!', 'success');
-        }
-
-        function loadProject() {
-            const saved = localStorage.getItem('superbuilder_project');
-            if (saved) {
-                const projectData = JSON.parse(saved);
-                // Простая проверка: принадлежит ли проект текущему пользователю
-                if (projectData.userId && currentUser && projectData.userId !== currentUser) {
-                     alert("Этот проект принадлежит другому пользователю.");
-                     return;
-                }
-                document.getElementById('canvas').innerHTML = projectData.canvas;
-                showMessage('Проект загружен!', 'info');
-            }
-        }
-
-        function clearCanvas() {
-            if (confirm('Очистить всю рабочую область?')) {
-                document.getElementById('canvas').innerHTML = '<div class="element" style="top: 100px; left: 100px; width: 300px; height: 150px; background: linear-gradient(45deg, var(--primary), var(--secondary)); color: white; display: flex; align-items: center; justify-content: center; text-align: center;" onclick="selectElement(this)"><div><h3>Добро пожаловать в SuperBuilder!</h3><p>Перетащите компоненты с панели слева</p></div></div>';
-                selectedElement = null;
-                saveToHistory();
-            }
-        }
-
-        function previewSite() {
-            const canvas = document.getElementById('canvas');
-            const previewWindow = window.open('', '_blank');
-            previewWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Предпросмотр сайта</title>
-                    <style>
-                        body { margin: 0; padding: 20px; font-family: 'Inter', Arial, sans-serif; background: #f9fafb; }
-                        .canvas { max-width: 1200px; margin: 0 auto; }
-                        .element { transition: all 0.3s; }
-                    </style>
-                </head>
-                <body>
-                    <div class="canvas">
-                        ${canvas.innerHTML}
-                    </div>
-                </body>
-                </html>
-            `);
-        }
-
-        function exportHTML() {
-            showExportModal();
-        }
-
-        function showExportModal() {
-            document.getElementById('exportModal').classList.add('active');
-        }
-
-        function showHelpModal() {
-            document.getElementById('helpModal').classList.add('active');
-        }
-
-        function hideModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-
-        function performExport() {
-            const projectName = document.getElementById('projectName').value;
-            const exportType = document.getElementById('exportType').value;
-            const includeAnimations = document.getElementById('includeAnimations').checked;
-            const include3D = document.getElementById('include3D').checked;
-            const includeAI = document.getElementById('includeAI').checked;
-            if (exportType === 'html') {
-                const htmlContent = generateHTML(includeAnimations, include3D, includeAI);
-                downloadFile(`${projectName}.html`, htmlContent);
-            } else if (exportType === 'pwa') {
-                exportAsPWA(projectName);
-            } else if (exportType === 'github') {
-                exportToGitHub(projectName);
-            }
-            hideModal('exportModal');
-        }
-
-        function generateHTML(animations = false, models = false, ai = false) {
-            let additionalCSS = '';
-            let additionalJS = '';
-            if (animations) {
-                additionalCSS += `
-                    @keyframes pulse {
-                        0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
-                        70% { box-shadow: 0 0 0 15px rgba(99, 102, 241, 0); }
-                        100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
-                    }
-                    .pulse { animation: pulse 2s infinite; }
-                `;
-            }
-            if (ai) {
-                additionalJS += `
-                    // AI-оптимизация загружена
-                    console.log('AI ассистент активирован');
-                `;
-            }
+        function downloadHTML() {
             const canvasContent = document.getElementById('canvas').innerHTML;
-            return `<!DOCTYPE html>
+            const fullHTML = `
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${document.getElementById('projectName').value || 'Экспортированный сайт'}</title>
+    <title>Мой сайт</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', Arial, sans-serif; }
-        .canvas { padding: 20px; }
-        .element { position: relative; margin: 10px 0; cursor: pointer; }
-        ${additionalCSS}
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f0f0; }
+        .element { position: relative; margin: 10px 0; padding: 10px; border: 1px solid #ccc; background-color: white; }
     </style>
 </head>
 <body>
-    <div class="canvas">
-        ${canvasContent}
-    </div>
-    <script>
-        // Интерактивность элементов
-        document.querySelectorAll('.element').forEach(el => {
-            el.addEventListener('click', function() {
-                this.style.transform = 'scale(1.02)';
-                setTimeout(() => {
-                    this.style.transform = 'scale(1)';
-                }, 200);
-            });
-        });
-        ${additionalJS}
-    </script>
+    ${canvasContent}
 </body>
 </html>`;
-        }
-
-        function downloadFile(filename, content) {
-            const blob = new Blob([content], { type: 'text/html' });
+            const blob = new Blob([fullHTML], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = filename;
+            a.download = 'index.html';
+            document.body.appendChild(a);
             a.click();
+            document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            showMessage('Файл скачан!', 'success');
+            showMessage('Файл index.html скачан!', 'success');
         }
 
-        async function exportToGitHub(projectName) {
-            showMessage('Экспорт в GitHub требует аутентификации', 'info');
-            // Здесь будет OAuth и экспорт через GitHub API
-        }
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = 'message ' + type; // Добавляем класс типа
+            messageEl.style.display = 'block';
 
-        function exportAsPWA(projectName) {
-            const manifest = {
-                "name": projectName,
-                "short_name": projectName,
-                "start_url": "/",
-                "display": "standalone",
-                "background_color": "#ffffff",
-                "theme_color": "#6366f1",
-                "icons": [
-                    {
-                        "src": "icon-192.png",
-                        "sizes": "192x192",
-                        "type": "image/png"
-                    },
-                    {
-                        "src": "icon-512.png",
-                        "sizes": "512x512",
-                        "type": "image/png"
-                    }
-                ]
-            };
-            const serviceWorker = `
-                const CACHE_NAME = 'pwa-cache-${projectName}';
-                const urlsToCache = [
-                    '/',
-                    '/index.html',
-                    '/styles.css',
-                    '/script.js'
-                ];
-                self.addEventListener('install', event => {
-                    event.waitUntil(
-                        caches.open(CACHE_NAME)
-                            .then(cache => cache.addAll(urlsToCache))
-                    );
-                });
-                self.addEventListener('fetch', event => {
-                    event.respondWith(
-                        caches.match(event.request)
-                            .then(response => response || fetch(event.request))
-                    );
-                });
-            `;
-            // Создаем ZIP архив с файлами PWA
-            showMessage('PWA архив готов!', 'success');
-        }
-
-        function showMessage(text, type = 'info') {
-            const message = document.getElementById('message');
-            message.textContent = text;
-            const colors = {
-                success: 'rgba(16, 185, 129, 0.9)',
-                error: 'rgba(239, 68, 68, 0.9)',
-                warning: 'rgba(245, 158, 11, 0.9)',
-                info: 'rgba(59, 130, 246, 0.9)'
-            };
-            message.style.background = colors[type] || colors.info;
-            message.classList.add('show');
             setTimeout(() => {
-                message.classList.remove('show');
+                messageEl.style.display = 'none';
             }, 3000);
         }
-
-        function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('collapsed');
-        }
-
-        function rgbToHex(rgb) {
-            if (!rgb || rgb === 'transparent') return '#ffffff';
-            if (rgb.startsWith('#')) return rgb;
-            const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-            if (!match) return '#ffffff';
-            return '#' + [match[1], match[2], match[3]].map(x => {
-                const hex = parseInt(x).toString(16);
-                return hex.length === 1 ? '0' + hex : hex;
-            }).join('');
-        }
-
-        // AI-ассистент
-        function toggleAIChat() {
-            document.getElementById('aiChat').classList.toggle('active');
-        }
-
-        function showAIPrompt() {
-            const prompt = prompt('Опишите, что вы хотите создать:');
-            if (prompt) {
-                generateFromAI(prompt);
-            }
-        }
-
-        function generateFromAI(prompt) {
-            // Имитация AI-ответа
-            const responses = {
-                'сайт о футболе': () => createElement('card', 200, 200),
-                '3d модель': () => createElement('3d-model', 300, 300),
-                'анимация': () => createElement('animation', 400, 400),
-                'кнопка': () => createElement('button', 150, 150),
-                'карточка игрока': () => {
-                    const card = document.createElement('div');
-                    card.className = 'element';
-                    card.style.cssText = 'position:absolute; top: 150px; left: 150px; width: 250px; height: 300px; background: linear-gradient(45deg, #0066cc, #00ccff); color: white; border-radius: 12px; padding: 20px; cursor: pointer;';
-                    card.onclick = () => selectElement(card);
-                    card.innerHTML = `
-                        <img src="https://via.placeholder.com/200x200/ffffff/000000?text=Игрок" style="width: 100%; border-radius: 8px; margin-bottom: 10px;">
-                        <h3 style="margin: 10px 0;">Игрок</h3>
-                        <p style="font-size: 14px; opacity: 0.8;">Позиция: Нападающий</p>
-                        <button style="width: 100%; padding: 10px; background: white; color: #0066cc; border: none; border-radius: 6px; margin-top: 10px; cursor: pointer;">Смотреть 3D</button>
-                    `;
-                    document.getElementById('canvas').appendChild(card);
-                    saveToHistory();
-                }
-            };
-            const action = responses[prompt.toLowerCase()] || (() => {
-                alert('AI не понял запрос. Попробуйте: "сайт о футболе", "3d модель", "кнопка"');
-            });
-            action();
-            showMessage('AI создал элемент!', 'success');
-        }
-
-        function sendAIText() {
-            const input = document.getElementById('aiInput');
-            const text = input.value.trim();
-            if (!text) return;
-            addChatMessage('Вы: ' + text, 'user');
-            input.value = '';
-            // Эмуляция AI ответа
-            setTimeout(() => {
-                const aiResponse = `Я создам для вас: "${text}"`;
-                addChatMessage('AI: ' + aiResponse, 'ai');
-                generateFromAI(text);
-            }, 1000);
-        }
-
-        function addChatMessage(text, sender) {
-            const messages = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.style.cssText = `
-                margin: 8px 0; 
-                padding: 8px 12px; 
-                border-radius: 8px; 
-                max-width: 80%;
-            `;
-            messageDiv.style.backgroundColor = sender === 'user' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.1)';
-            messageDiv.style.textAlign = sender === 'user' ? 'right' : 'left';
-            messageDiv.textContent = text;
-            messages.appendChild(messageDiv);
-            messages.scrollTop = messages.scrollHeight;
-        }
-
-        function handleAIKeyPress(e) {
-            if (e.key === 'Enter') {
-                sendAIText();
-            }
-        }
-
-        // 3D модель
-        function init3DRenderer() {
-            // Инициализация Three.js будет здесь
-            console.log('3D рендерер инициализирован');
-        }
-
-        function load3DModel(element) {
-            document.getElementById('modelContainer').classList.add('active');
-            // Здесь будет загрузка 3D модели через Three.js
-            showMessage('3D модель загружается...', 'info');
-        }
-
-        // --- Функции для регистрации и входа ---
-        let currentUser = null; // Для хранения имени вошедшего пользователя
-
-        function showRegisterModal() {
-            document.getElementById('registerModal').classList.add('active');
-        }
-
-        function showLoginModal() {
-            document.getElementById('loginModal').classList.add('active');
-        }
-
-        function hashPassword(password) {
-            return CryptoJS.SHA256(password).toString(CryptoJS.enc.Hex);
-        }
-
-        async function registerUser() {
-            const login = document.getElementById('reg-login').value.trim();
-            const password = document.getElementById('reg-password').value;
-            if (!login || !password) {
-                showMessage('Введите логин и пароль', 'error');
-                return;
-            }
-            const hashedPassword = hashPassword(password);
-
-            try {
-                const response = await fetch(`${API_URL}?action=addUser&login=${encodeURIComponent(login)}&password=${hashedPassword}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                const result = await response.json();
-                if (result.result === 'success') {
-                    showMessage(result.message, 'success');
-                    hideModal('registerModal');
-                } else {
-                    showMessage(result.message, 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка при регистрации:', error);
-                showMessage('Ошибка сети при регистрации', 'error');
-            }
-        }
-
-        async function loginUser() {
-            const login = document.getElementById('login-username').value.trim();
-            const password = document.getElementById('login-password').value;
-            if (!login || !password) {
-                showMessage('Введите логин и пароль', 'error');
-                return;
-            }
-            const hashedPassword = hashPassword(password);
-
-            try {
-                const response = await fetch(`${API_URL}?action=checkUser&login=${encodeURIComponent(login)}&password=${hashedPassword}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                const result = await response.json();
-                if (result.result === 'success') {
-                    showMessage(result.message, 'success');
-                    // Успешный вход
-                    currentUser = login;
-                    localStorage.setItem('currentUser', login); // Сохраняем имя пользователя
-                    showUserInfo(login);
-                    hideModal('loginModal');
-                } else {
-                    showMessage(result.message, 'error');
-                }
-            } catch (error) {
-                console.error('Ошибка при входе:', error);
-                showMessage('Ошибка сети при входе', 'error');
-            }
-        }
-
-        function showUserInfo(username) {
-            document.getElementById('user-name-display').textContent = username;
-            document.getElementById('user-info').style.display = 'flex';
-        }
-
-        function logout() {
-            currentUser = null;
-            localStorage.removeItem('currentUser'); // Удаляем имя пользователя
-            document.getElementById('user-info').style.display = 'none';
-            showMessage('Вы вышли из системы', 'info');
-        }
-
-        // Дополнительные фичи
-        function enableAdvancedFeatures() {
-            // Поддержка MathJax
-            if (typeof MathJax !== 'undefined') {
-                MathJax.typesetPromise();
-            }
-            // Поддержка анимаций
-            document.querySelectorAll('.element').forEach(el => {
-                el.addEventListener('mouseenter', () => {
-                    el.style.transform = 'translateY(-5px)';
-                });
-                el.addEventListener('mouseleave', () => {
-                    el.style.transform = 'translateY(0)';
-                });
-            });
-        }
-
-        // Запуск дополнительных фич
-        enableAdvancedFeatures();
     </script>
 </body>
 </html>
