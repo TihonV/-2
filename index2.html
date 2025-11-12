@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Визуальный CSS Редактор</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            --glass: rgba(255,255,255, 0.1);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .editor-container {
+            display: flex;
+            height: 100vh;
+            padding: 20px;
+            gap: 20px;
+        }
+        .controls-panel {
+            width: 400px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255, 0.1);
+        }
+        .preview-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .preview-container {
+            flex: 1;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255, 0.1);
+        }
+        .preview-element {
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            background-color: var(--primary);
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .css-output {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 14px;
+            color: #aaffaa;
+            white-space: pre-wrap;
+            overflow: auto;
+            max-height: 200px;
+            border: 1px solid rgba(255,255,255, 0.1);
+        }
+        .property-group {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255, 0.1);
+        }
+        .property-group h4 {
+            font-size: 14px;
+            text-transform: uppercase;
+            color: var(--gray);
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--light);
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid rgba(255,255,255, 0.1);
+            border-radius: 8px;
+            background: rgba(30, 41, 59, 0.5);
+            color: white;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .color-picker {
+            height: 44px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .range-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .range-value {
+            min-width: 40px;
+            text-align: right;
+            font-size: 12px;
+            color: var(--gray);
+        }
+        .top-bar {
+            padding: 10px 20px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .action-btn {
+            padding: 8px 16px;
+            margin: 0 3px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        .btn-accent {
+            background: linear-gradient(45deg, var(--secondary), var(--accent));
+            color: white;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--light);
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="logo">CSS Visual Editor</div>
+        <div>
+            <button class="action-btn btn-outline" onclick="copyCSS()">📋 Копировать CSS</button>
+            <button class="action-btn btn-primary" onclick="resetStyles()">🔄 Сбросить</button>
+        </div>
+    </div>
+    <div class="editor-container">
+        <div class="controls-panel">
+            <div class="property-group">
+                <h4>Цвета</h4>
+                <div class="form-group">
+                    <label>Цвет фона</label>
+                    <input type="color" class="form-control color-picker" id="bgColor" value="#6366f1" onchange="updateStyles()">
+                </div>
+                <div class="form-group">
+                    <label>Цвет текста</label>
+                    <input type="color" class="form-control color-picker" id="textColor" value="#ffffff" onchange="updateStyles()">
+                </div>
+                <div class="form-group">
+                    <label>Цвет границы</label>
+                    <input type="color" class="form-control color-picker" id="borderColor" value="#000000" onchange="updateStyles()">
+                </div>
+            </div>
+            <div class="property-group">
+                <h4>Размеры</h4>
+                <div class="form-group">
+                    <label class="range-label">
+                        <span>Ширина (px)</span>
+                        <span class="range-value" id="widthValue">200</span>
+                    </label>
+                    <input type="range" class="form-control" id="width" min="50" max="500" value="200" onchange="updateStyles()">
+                </div>
+                <div class="form-group">
+                    <label class="range-label">
+                        <span>Высота (px)</span>
+                        <span class="range-value" id="heightValue">200</span>
+                    </label>
+                    <input type="range" class="form-control" id="height" min="50" max="500" value="200" onchange="updateStyles()">
+                </div>
+                <div class="form-group">
+                    <label class="range-label">
+                        <span>Внутренний отступ (px)</span>
+                        <span class="range-value" id="paddingValue">20</span>
+                    </label>
+                    <input type="range" class="form-control" id="padding" min="0" max="100" value="20" onchange="updateStyles()">
+                </div>
+                <div class="form-group">
+                    <label class="range-label">
+                        <span>Внешний отступ (px)</span>
+                        <span class="range-value" id="marginValue">0</span>
+                    </label>
+                    <input type="range" class="form-control" id="margin" min="0" max="100" value="0" onchange="updateStyles()">
+                </div>
+                <div class="form-group">
+                    <label class="range-label">
+                        <span>Радиус скругления (px)</span>
+                        <span class="range-value" id="borderRadiusValue">0</span>
+                    </label>
+                    <input type="range" class="form-control" id="borderRadius" min="0" max="100" value="0" onchange="updateStyles()">
+                </div>
+            </div>
+            <div class="property-group">
+                <h4>Текст</h4>
+                <div class="form-group">
+                    <label>Размер шрифта (px)</label>
+                    <input type="range" class="form-control" id="fontSize" min="10" max="50" value="16" onchange="updateStyles()">
+                </div>
+                <div class="form-group">
+                    <label>Тип шрифта</label>
+                    <select class="form-control" id="fontFamily" onchange="updateStyles()">
+                        <option value="Arial, sans-serif">Arial</option>
+                        <option value="'Times New Roman', serif">Times New Roman</option>
+                        <option value="'Courier New', monospace">Courier New</option>
+                        <option value="Inter, sans-serif" selected>Inter</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Жирность шрифта</label>
+                    <select class="form-control" id="fontWeight" onchange="updateStyles()">
+                        <option value="normal">Normal</option>
+                        <option value="bold" selected>Bold</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                        <option value="300">300</option>
+                        <option value="400">400</option>
+                        <option value="500">500</option>
+                        <option value="600">600</option>
+                        <option value="700">700</option>
+                        <option value="800">800</option>
+                        <option value="900">900</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Выравнивание текста</label>
+                    <select class="form-control" id="textAlign" onchange="updateStyles()">
+                        <option value="center" selected>По центру</option>
+                        <option value="left">Слева</option>
+                        <option value="right">Справа</option>
+                    </select>
+                </div>
+            </div>
+            <div class="property-group">
+                <h4>Границы</h4>
+                <div class="form-group">
+                    <label class="range-label">
+                        <span>Толщина границы (px)</span>
+                        <span class="range-value" id="borderWidthValue">0</span>
+                    </label>
+                    <input type="range" class="form-control" id="borderWidth" min="0" max="20" value="0" onchange="updateStyles()">
+                </div>
+                <div class="form-group">
+                    <label>Стиль границы</label>
+                    <select class="form-control" id="borderStyle" onchange="updateStyles()">
+                        <option value="solid">Сплошная</option>
+                        <option value="dashed">Пунктирная</option>
+                        <option value="dotted">Точками</option>
+                        <option value="double">Двойная</option>
+                    </select>
+                </div>
+            </div>
+            <div class="property-group">
+                <h4>Тени</h4>
+                <div class="form-group">
+                    <label>Включить тень блока</label>
+                    <input type="checkbox" id="enableBoxShadow" onchange="updateStyles()">
+                </div>
+                <div id="boxShadowControls" style="display: none; padding-left: 15px;">
+                    <div class="form-group">
+                        <label class="range-label">
+                            <span>Сдвиг X (px)</span>
+                            <span class="range-value" id="boxShadowXValue">0</span>
+                        </label>
+                        <input type="range" class="form-control" id="boxShadowX" min="-20" max="20" value="0" onchange="updateStyles()">
+                    </div>
+                    <div class="form-group">
+                        <label class="range-label">
+                            <span>Сдвиг Y (px)</span>
+                            <span class="range-value" id="boxShadowYValue">0</span>
+                        </label>
+                        <input type="range" class="form-control" id="boxShadowY" min="-20" max="20" value="0" onchange="updateStyles()">
+                    </div>
+                    <div class="form-group">
+                        <label class="range-label">
+                            <span>Размытие (px)</span>
+                            <span class="range-value" id="boxShadowBlurValue">0</span>
+                        </label>
+                        <input type="range" class="form-control" id="boxShadowBlur" min="0" max="50" value="0" onchange="updateStyles()">
+                    </div>
+                    <div class="form-group">
+                        <label class="range-label">
+                            <span>Распространение (px)</span>
+                            <span class="range-value" id="boxShadowSpreadValue">0</span>
+                        </label>
+                        <input type="range" class="form-control" id="boxShadowSpread" min="-10" max="20" value="0" onchange="updateStyles()">
+                    </div>
+                    <div class="form-group">
+                        <label>Цвет тени</label>
+                        <input type="color" class="form-control color-picker" id="boxShadowColor" value="#000000" onchange="updateStyles()">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="preview-panel">
+            <div class="preview-container">
+                <div class="preview-element" id="previewElement">
+                    Пример элемента
+                </div>
+            </div>
+            <div class="css-output" id="cssOutput">/* Здесь появится CSS */</div>
+        </div>
+    </div>
+
+    <script>
+        const previewElement = document.getElementById('previewElement');
+        const cssOutput = document.getElementById('cssOutput');
+        const boxShadowControls = document.getElementById('boxShadowControls');
+        const enableBoxShadowCheckbox = document.getElementById('enableBoxShadow');
+
+        // Обновление значения рядом с ползунком
+        function updateRangeValue(sliderId) {
+            const slider = document.getElementById(sliderId);
+            const valueDisplay = document.getElementById(sliderId + 'Value');
+            if (valueDisplay) {
+                valueDisplay.textContent = slider.value;
+            }
+        }
+
+        // Обработчик для чекбокса тени
+        enableBoxShadowCheckbox.addEventListener('change', function() {
+            boxShadowControls.style.display = this.checked ? 'block' : 'none';
+            updateStyles(); // Обновляем стили при включении/выключении
+        });
+
+        // Обновление стилей элемента и CSS-вывода
+        function updateStyles() {
+            // Обновляем значения рядом с ползунками
+            ['width', 'height', 'padding', 'margin', 'borderRadius', 'borderWidth', 'boxShadowX', 'boxShadowY', 'boxShadowBlur', 'boxShadowSpread'].forEach(id => updateRangeValue(id));
+
+            const styles = {
+                backgroundColor: document.getElementById('bgColor').value,
+                color: document.getElementById('textColor').value,
+                width: document.getElementById('width').value + 'px',
+                height: document.getElementById('height').value + 'px',
+                padding: document.getElementById('padding').value + 'px',
+                margin: document.getElementById('margin').value + 'px',
+                borderRadius: document.getElementById('borderRadius').value + 'px',
+                fontSize: document.getElementById('fontSize').value + 'px',
+                fontFamily: document.getElementById('fontFamily').value,
+                fontWeight: document.getElementById('fontWeight').value,
+                textAlign: document.getElementById('textAlign').value,
+                borderWidth: document.getElementById('borderWidth').value + 'px',
+                borderStyle: document.getElementById('borderStyle').value,
+                borderColor: document.getElementById('borderColor').value,
+            };
+
+            // Условное добавление тени
+            if (enableBoxShadowCheckbox.checked) {
+                styles.boxShadow = `${document.getElementById('boxShadowX').value}px ${document.getElementById('boxShadowY').value}px ${document.getElementById('boxShadowBlur').value}px ${document.getElementById('boxShadowSpread').value}px ${document.getElementById('boxShadowColor').value}`;
+            } else {
+                styles.boxShadow = 'none'; // Убираем тень, если чекбокс снят
+            }
+
+            // Применяем стили к элементу предварительного просмотра
+            Object.assign(previewElement.style, styles);
+
+            // Генерируем CSS-строку
+            let cssString = '.your-element-class {\n';
+            for (const [property, value] of Object.entries(styles)) {
+                if (value !== 'none') { // Не выводим 'box-shadow: none;' если тень отключена
+                    const cssProp = property.replace(/([A-Z])/g, '-$1').toLowerCase(); // camelCase в kebab-case
+                    cssString += `    ${cssProp}: ${value};\n`;
+                }
+            }
+            cssString += '}';
+
+            // Выводим CSS в поле
+            cssOutput.textContent = cssString;
+        }
+
+        // Функция копирования CSS
+        function copyCSS() {
+            cssOutput.select();
+            document.execCommand('copy');
+            showMessage('CSS скопирован в буфер обмена!', 'success');
+        }
+
+        // Функция сброса стилей
+        function resetStyles() {
+            // Сбрасываем все элементы управления к значениям по умолчанию
+            document.getElementById('bgColor').value = '#6366f1';
+            document.getElementById('textColor').value = '#ffffff';
+            document.getElementById('borderColor').value = '#000000';
+            document.getElementById('width').value = '200';
+            document.getElementById('height').value = '200';
+            document.getElementById('padding').value = '20';
+            document.getElementById('margin').value = '0';
+            document.getElementById('borderRadius').value = '0';
+            document.getElementById('fontSize').value = '16';
+            document.getElementById('fontFamily').value = 'Inter, sans-serif';
+            document.getElementById('fontWeight').value = 'bold';
+            document.getElementById('textAlign').value = 'center';
+            document.getElementById('borderWidth').value = '0';
+            document.getElementById('borderStyle').value = 'solid';
+            enableBoxShadowCheckbox.checked = false;
+            boxShadowControls.style.display = 'none';
+            document.getElementById('boxShadowX').value = '0';
+            document.getElementById('boxShadowY').value = '0';
+            document.getElementById('boxShadowBlur').value = '0';
+            document.getElementById('boxShadowSpread').value = '0';
+            document.getElementById('boxShadowColor').value = '#000000';
+
+            updateStyles(); // Применяем сброшенные стили
+            showMessage('Стили сброшены', 'info');
+        }
+
+        function showMessage(text, type = 'info') {
+            // Простая всплывающая подсказка
+            const message = document.createElement('div');
+            message.textContent = text;
+            message.style.cssText = `
+                position: fixed; top: 20px; right: 20px; padding: 10px 20px; border-radius: 8px;
+                background: ${type === 'success' ? 'rgba(16, 185, 129, 0.9)' : 'rgba(59, 130, 246, 0.9)'};
+                color: white; z-index: 1000; font-size: 14px; font-weight: 500;
+            `;
+            document.body.appendChild(message);
+            setTimeout(() => message.remove(), 3000);
+        }
+
+        // Инициализация при загрузке
+        updateStyles();
+    </script>
+</body>
+</html>
